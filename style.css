@@ -977,3 +977,70 @@ form input[type="image"] {
         gap: 0; /* Rimuovi il gap del flexbox quando sono impilati */
     }
 }
+
+/* --- Stili per input data personalizzato (add-event.html e edit-event.html) --- */
+
+.custom-date-input {
+    position: relative;
+    width: 100%; /* Occupa tutta la larghezza disponibile */
+    display: flex; /* Permette di allineare testo e icona */
+    align-items: center; /* Centra verticalmente */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+    box-sizing: border-box; /* Include padding e border nella larghezza */
+    overflow: hidden; /* Assicura che l'input non sborderà se ci sono problemi di rendering */
+}
+
+.custom-date-input input[type="date"] {
+    flex-grow: 1; /* L'input occupa lo spazio rimanente */
+    padding: 10px 15px; /* Spazio interno come per le dropdown */
+    border: none; /* Rimuovi il bordo nativo dell'input */
+    background: transparent; /* Sfondo trasparente per mostrare il colore del parent */
+    color: #333;
+    font-family: Arial, sans-serif;
+    font-size: 1em; /* Dimensione del testo */
+    cursor: pointer;
+    box-sizing: border-box; /* Importante per padding e larghezza */
+
+    /* Nasconde la freccia/icona nativa su alcuni browser */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+/* Stile per il focus dell'input data */
+.custom-date-input input[type="date"]:focus {
+    outline: none;
+    /* Il bordo e l'ombra del parent .custom-date-input verranno gestiti */
+}
+
+/* Aggiunge l'icona del calendario come pseudo-elemento */
+.custom-date-input::after {
+    content: '\1F4C5'; /* Unicode per l'emoji del calendario (o puoi usare un'altra icona CSS) */
+    font-family: 'Font Awesome 5 Free', 'Arial Unicode MS', sans-serif; /* Se usi Font Awesome */
+    font-weight: 900; /* Per Font Awesome Solid */
+    font-size: 1.2em; /* Dimensione dell'icona */
+    color: #555; /* Colore dell'icona */
+    padding-right: 10px; /* Spazio a destra dell'icona */
+    pointer-events: none; /* L'icona non deve catturare il click */
+    display: flex; /* Per centrare l'icona */
+    align-items: center;
+    justify-content: center;
+    height: 100%; /* Altezza dell'icona come il contenitore */
+}
+
+/* Stile del bordo e dell'ombra al focus del contenitore, come per le dropdown */
+.custom-date-input:focus-within { /* Applica gli stili quando un elemento al suo interno è a fuoco */
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* Media query per mobile per assicurare un buon tocco */
+@media (max-width: 768px) {
+    .custom-date-input input[type="date"] {
+        min-height: 44px; /* Altezza minima raccomandata per elementi interattivi su mobile */
+        font-size: 1.1em; /* Leggermente più grande per leggibilità */
+    }
+}
