@@ -54,22 +54,25 @@
             
             <div class="filters-container">
                 <div class="filter-group">
-                    <label for="customGameTypeFilter">Game Type:</label>
-                    <div id="customGameTypeFilter" class="custom-dropdown">
-                        <button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="gameTypeOptions">All</button>
-                        <ul class="dropdown-options" role="listbox" id="gameTypeOptions">
-                            </ul>
-                    </div>
-                    </div>
+                    <label for="gameTypeFilter">Game Type:</label>
+                    <select id="gameTypeFilter">
+                        <option value="all">All</option>
+                        <option value="field">Field</option>
+                        <option value="box">Box</option>
+                        <option value="sixes">Sixes</option>
+                        <option value="clinic">Clinic</option>
+                    </select>
+                </div>
 
                 <div class="filter-group">
-                    <label for="customGenderFilter">Gender:</label>
-                    <div id="customGenderFilter" class="custom-dropdown">
-                        <button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="genderOptions">All</button>
-                        <ul class="dropdown-options" role="listbox" id="genderOptions">
-                            </ul>
-                    </div>
-                    </div>
+                    <label for="genderFilter">Gender:</label>
+                    <select id="genderFilter">
+                        <option value="all">All</option>
+                        <option value="men">Men</option>
+                        <option value="women">Women</option>
+                        <option value="both">Both</option>
+                    </select>
+                </div>
             </div>
             <h3>Event List</h3>
             <div id="event-list">
@@ -83,7 +86,7 @@
     <div id="footer-placeholder"></div>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script type="module" src="script.js"></script>
-    <script src="include.js"></script>
+	<script src="include.js"></script>
     <script src="menu.js"></script>
 </body>
 </html>

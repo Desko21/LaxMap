@@ -2,7 +2,7 @@
 import {
     JSONBIN_MASTER_KEY,
     JSONBIN_EVENTS_READ_URL,
-    JSONBIN_EVENTS_WRITE_URL,
+    JSONBIN_EVENTS_WRITE_URL, // Assicurati di avere questa costante in config.js
     NOMINATIM_USER_AGENT
 } from './config.js';
 
@@ -22,99 +22,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     const editLatitudeInput = document.getElementById('editLatitude');
     const editLongitudeInput = document.getElementById('editLongitude');
     const geolocationMessageDiv = document.getElementById('geolocationMessage');
-
-    // Riferimenti ai div delle dropdown personalizzate, NON più i select
-    const customEditEventTypeDropdown = document.getElementById('customEditEventType');
-    const customEditEventGenderDropdown = document.getElementById('customEditEventGender');
-    const customCurrencyTypeDropdown = document.getElementById('customCurrencyType');
-    const customCostTypeDropdown = document.getElementById('customCostType');
-
+    const editEventTypeSelect = document.getElementById('editEventType');
+    const editEventGenderSelect = document.getElementById('editEventGender');
     const editEventStartDateInput = document.getElementById('editEventStartDate');
     const editEventEndDateInput = document.getElementById('editEventEndDate');
     const editEventDescriptionTextarea = document.getElementById('editEventDescription');
     const editEventLinkInput = document.getElementById('editEventLink');
     const editContactEmailInput = document.getElementById('editContactEmail');
     const editEventCostInput = document.getElementById('editEventCost');
+    const currencyTypeSelect = document.getElementById('currencyType');
+    const costTypeSelect = document.getElementById('costType');
 
+    // NUOVO: Bottone per eliminare l'evento
     const deleteEventButton = document.getElementById('deleteEventButton');
 
-    const gameTypes = ['All', 'Field', 'Box', 'Sixes', 'Clinic', 'Other']; // 'All' per compatibilità se usato come filtro
-    const genders = ['All', 'Men', 'Women', 'Both', 'Mixed', 'Other']; // 'All' per compatibilità
+    const gameTypes = ['Field', 'Box', 'Sixes', 'Clinic', 'Other'];
+    const genders = ['Men', 'Women', 'Both', 'Mixed', 'Other'];
     const currencies = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', 'BRL'];
     const costTypes = ['Not Specified', 'Per Person', 'Per Team'];
 
-    /**
-     * Inizializza una dropdown personalizzata.
-     * @param {HTMLElement} dropdownElement Il div con classe .custom-dropdown.
-     * @param {string[]} optionsArray Un array di stringhe per le opzioni.
-     * @param {string} initialValue Il valore iniziale da selezionare (opzionale).
-     */
-    function setupCustomDropdown(dropdownElement, optionsArray, initialValue = '') {
-        const toggleButton = dropdownElement.querySelector('.dropdown-toggle');
-        const optionsList = dropdownElement.querySelector('.dropdown-options');
 
-        // Pulisci le opzioni esistenti
-        optionsList.innerHTML = '';
+ function populateDropdown(selectElement, options, selectedValue = '') {
+    selectElement.innerHTML = '';
+    // Assicurati che selectedValue sia una stringa, anche se è null o undefined
+    const normalizedSelectedValue = (selectedValue || '').toLowerCase().replace(/\s/g, '');
 
-        // Popola le opzioni
-        optionsArray.forEach(optionText => {
-            const li = document.createElement('li');
-            li.setAttribute('role', 'option');
-            li.setAttribute('data-value', optionText.toLowerCase().replace(/\s/g, ''));
-            li.textContent = optionText;
-            optionsList.appendChild(li);
-
-            li.addEventListener('click', () => {
-                // Imposta il testo del bottone con il testo dell'opzione cliccata
-                toggleButton.textContent = optionText;
-                dropdownElement.classList.remove('open');
-                // Rimuovi 'selected' da tutti e aggiungi all'elemento corrente
-                optionsList.querySelectorAll('li').forEach(item => item.classList.remove('selected'));
-                li.classList.add('selected');
-                // Aggiorna l'attributo aria-expanded
-                toggleButton.setAttribute('aria-expanded', 'false');
-
-                // Dispatch un evento 'change' personalizzato per simulare il comportamento di select
-                const event = new Event('change', { bubbles: true });
-                dropdownElement.dispatchEvent(event);
-            });
-        });
-
-        // Imposta il valore iniziale del bottone
-        let selectedOption = optionsArray.find(opt => opt.toLowerCase().replace(/\s/g, '') === initialValue.toLowerCase().replace(/\s/g, ''));
-        if (!selectedOption && optionsArray.length > 0) {
-            // Se l'initialValue non corrisponde, prova a usare il primo elemento o un default appropriato
-            selectedOption = optionsArray[0];
+    options.forEach(optionText => {
+        const option = document.createElement('option');
+        option.value = optionText.toLowerCase().replace(/\s/g, '');
+        option.textContent = optionText;
+        
+        // Confronta con il valore normalizzato
+        if (option.value === normalizedSelectedValue) {
+            option.selected = true;
         }
-        if (selectedOption) {
-            toggleButton.textContent = selectedOption;
-            optionsList.querySelector(`[data-value="${selectedOption.toLowerCase().replace(/\s/g, '')}"]`)?.classList.add('selected');
-        } else {
-             // Fallback se non ci sono opzioni o un valore iniziale sensato
-            toggleButton.textContent = 'Select...';
-        }
+        selectElement.appendChild(option);
+    });
+}
 
+    populateDropdown(editEventTypeSelect, gameTypes);
+    populateDropdown(editEventGenderSelect, genders);
+    populateDropdown(currencyTypeSelect, currencies);
+    populateDropdown(costTypeSelect, costTypes);
 
-        // Toggle della dropdown al click sul bottone
-        toggleButton.addEventListener('click', () => {
-            const isOpen = dropdownElement.classList.toggle('open');
-            toggleButton.setAttribute('aria-expanded', isOpen);
-        });
-
-        // Chiudi la dropdown se si clicca fuori
-        document.addEventListener('click', (event) => {
-            if (!dropdownElement.contains(event.target) && dropdownElement.classList.contains('open')) {
-                dropdownElement.classList.remove('open');
-                toggleButton.setAttribute('aria-expanded', 'false');
-            }
-        });
-    }
-
-    // Inizializza le dropdown all'avvio della pagina (con valori di default o vuoti)
-    setupCustomDropdown(customEditEventTypeDropdown, gameTypes);
-    setupCustomDropdown(customEditEventGenderDropdown, genders);
-    setupCustomDropdown(customCurrencyTypeDropdown, currencies);
-    setupCustomDropdown(customCostTypeDropdown, costTypes);
 
     // Funzione per mostrare messaggi
     function showMessage(msg, type = 'info') {
@@ -131,13 +81,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         messageDiv.className = 'message';
         geolocationMessageDiv.textContent = '';
         geolocationMessageDiv.className = 'message';
-
-        // Resetta le custom dropdown al valore predefinito o vuoto
-        setupCustomDropdown(customEditEventTypeDropdown, gameTypes);
-        setupCustomDropdown(customEditEventGenderDropdown, genders);
-        setupCustomDropdown(customCurrencyTypeDropdown, currencies);
-        setupCustomDropdown(customCostTypeDropdown, costTypes);
     }
+
 
     searchButton.addEventListener('click', async () => {
         const eventId = searchEventIdInput.value.trim();
@@ -171,19 +116,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 editEventLocationInput.value = event.location || '';
                 editLatitudeInput.value = event.latitude || '';
                 editLongitudeInput.value = event.longitude || '';
-
-                // AGGIORNAMENTO: Popola le dropdown personalizzate con i valori dell'evento
-                setupCustomDropdown(customEditEventTypeDropdown, gameTypes, event.type);
-                setupCustomDropdown(customEditEventGenderDropdown, genders, event.gender);
-                setupCustomDropdown(customCurrencyTypeDropdown, currencies, event.currency);
-                setupCustomDropdown(customCostTypeDropdown, costTypes, event.costType);
-                
+                populateDropdown(editEventTypeSelect, gameTypes, event.type);
+                populateDropdown(editEventGenderSelect, genders, event.gender);
                 editEventStartDateInput.value = event.startDate || '';
                 editEventEndDateInput.value = event.endDate || '';
                 editEventDescriptionTextarea.value = event.description || '';
                 editEventLinkInput.value = event.link || '';
                 editContactEmailInput.value = event.contactEmail || '';
                 editEventCostInput.value = event.cost !== undefined ? event.cost : '';
+                populateDropdown(currencyTypeSelect, currencies, event.currency);
+                populateDropdown(costTypeSelect, costTypes, event.costType);
 
                 eventEditFormContainer.style.display = 'block';
                 showMessage('Event found. You can now edit its details.', 'success');
@@ -243,12 +185,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         showMessage('Saving changes...', 'info');
 
-        // FUNZIONE DI SUPPORTO: Recupera il valore selezionato da una dropdown personalizzata
-        const getCustomDropdownValue = (dropdownElement) => {
-            const selectedLi = dropdownElement.querySelector('.dropdown-options li.selected');
-            return selectedLi ? selectedLi.dataset.value : '';
-        };
-
         const eventId = eventIdInput.value;
         const updatedEvent = {
             id: eventId, // Assicurati che l'ID sia incluso
@@ -256,18 +192,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             location: editEventLocationInput.value.trim(),
             latitude: parseFloat(editLatitudeInput.value),
             longitude: parseFloat(editLongitudeInput.value),
-            // AGGIORNAMENTO: Recupera i valori dalle dropdown personalizzate
-            type: getCustomDropdownValue(customEditEventTypeDropdown),
-            gender: getCustomDropdownValue(customEditEventGenderDropdown),
+            type: editEventTypeSelect.value,
+            gender: editEventGenderSelect.value,
             startDate: editEventStartDateInput.value,
             endDate: editEventEndDateInput.value || null, // Se vuota, salva come null
             description: editEventDescriptionTextarea.value.trim(),
             link: editEventLinkInput.value.trim() || null,
             contactEmail: editContactEmailInput.value.trim() || null,
             cost: editEventCostInput.value ? parseFloat(editEventCostInput.value) : null,
-            // AGGIORNAMENTO: Recupera i valori dalle dropdown personalizzate
-            currency: getCustomDropdownValue(customCurrencyTypeDropdown),
-            costType: getCustomDropdownValue(customCostTypeDropdown),
+            currency: currencyTypeSelect.value,
+            costType: costTypeSelect.value,
             // Aggiungi qui eventuali altri campi che potresti avere, es. featured: event.featured
         };
 

@@ -37,24 +37,15 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
     function onLocationError(e) {
         console.error("Geolocation error:", e.message);
         // Mostra un messaggio all'utente in caso di errore
-        // Assicurati che messageDiv sia definito prima di usarlo qui
-        // E' meglio definirlo prima della chiamata a map.locate
-        if (messageDiv) {
-            messageDiv.textContent = `Errore di geolocalizzazione: ${e.message}. Usando la vista predefinita.`;
-            messageDiv.className = 'message error';
-            setTimeout(() => messageDiv.textContent = '', 5000); // Rimuove il messaggio dopo 5 secondi
-        } else {
-            console.error("messageDiv not found, cannot display geolocation error message.");
-        }
+        messageDiv.textContent = `Errore di geolocalizzazione: ${e.message}. Usando la vista predefinita.`;
+        messageDiv.className = 'message error';
+        setTimeout(() => messageDiv.textContent = '', 5000); // Rimuove il messaggio dopo 5 secondi
     }
 
     // Aggiungi i listener per gli eventi di geolocalizzazione della mappa
     map.on('locationfound', onLocationFound);
     map.on('locationerror', onLocationError);
 
-
-    const eventListDiv = document.getElementById('event-list');
-    const messageDiv = document.getElementById('message'); // Definisci messageDiv qui per renderlo disponibile prima
 
     if (navigator.geolocation) {
         console.log("Geolocation is supported by this browser. Attempting to locate...");
@@ -67,26 +58,15 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
         });
     } else {
         console.log("Geolocation is not supported by this browser. Using default map view.");
-        if (messageDiv) {
-            messageDiv.textContent = 'Il tuo browser non supporta la geolocalizzazione.';
-            messageDiv.className = 'message error';
-        }
+        messageDiv.textContent = 'Il tuo browser non supporta la geolocalizzazione.';
+        messageDiv.className = 'message error';
     }
 
+    const eventListDiv = document.getElementById('event-list');
+    const messageDiv = document.getElementById('message');
 
-    // RIMOSSO: gameTypeFilter e genderFilter NON sono più elementi <select> diretti
-    // const gameTypeFilter = document.getElementById('gameTypeFilter');
-    // const genderFilter = document.getElementById('genderFilter');
-
-    // NUOVI RIFERIMENTI per le dropdown personalizzate
-    const customGameTypeFilter = document.getElementById('customGameTypeFilter');
-    const gameTypeToggleButton = customGameTypeFilter.querySelector('.dropdown-toggle');
-    const gameTypeOptionsList = customGameTypeFilter.querySelector('.dropdown-options');
-
-    const customGenderFilter = document.getElementById('customGenderFilter');
-    const genderToggleButton = customGenderFilter.querySelector('.dropdown-toggle');
-    const genderOptionsList = customGenderFilter.querySelector('.dropdown-options');
-
+    const gameTypeFilter = document.getElementById('gameTypeFilter');
+    const genderFilter = document.getElementById('genderFilter');
 
     let markers = L.featureGroup().addTo(map);
     let allEvents = []; // Contiene tutti gli eventi caricati da JSONBin.io
@@ -95,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
     const gameTypes = ['All', 'Field', 'Box', 'Sixes', 'Clinic', 'Other'];
     const genders = ['All', 'Men', 'Women', 'Both', 'Mixed', 'Other'];
 
-    const costTypeOptions = ['Not Specified', 'Per Person', 'Per Team'];
+    const costTypeOptions = ['Not Specified', 'Per Person', 'Per Team']; // Non usata direttamente qui ma lasciata
     const currencySymbols = {
         'usd': '$',
         'eur': '€',
@@ -115,131 +95,19 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
         'perteam': 'per team'
     };
 
-    // RIMOSSO: Questa funzione non è più necessaria per le dropdown personalizzate
-    // function populateFilterDropdown(selectElement, options) { /* ... */ }
-
-    // RIMOSSO: Queste chiamate non sono più necessarie
-    // populateFilterDropdown(gameTypeFilter, gameTypes);
-    // populateFilterDropdown(genderFilter, genders);
-
-
-    /**
-     * Inizializza una dropdown personalizzata.
-     * @param {HTMLElement} customDropdownElement Il div contenitore della dropdown.
-     * @param {string[]} optionsArray Un array di stringhe per le opzioni.
-     * @param {Function} onChangeCallback La funzione da chiamare quando un'opzione viene selezionata.
-     */
-    function setupCustomDropdown(customDropdownElement, optionsArray, onChangeCallback) {
-        const toggleButton = customDropdownElement.querySelector('.dropdown-toggle');
-        const optionsList = customDropdownElement.querySelector('.dropdown-options');
-
-        // Popola le opzioni
-        optionsList.innerHTML = '';
-        optionsArray.forEach(optionText => {
-            const listItem = document.createElement('li');
-            listItem.textContent = optionText;
-            listItem.setAttribute('role', 'option');
-            listItem.setAttribute('data-value', optionText.toLowerCase().replace(/\s/g, ''));
-            listItem.setAttribute('tabindex', '0'); // Rendi le opzioni focusable
-            optionsList.appendChild(listItem);
-        });
-
-        // Imposta il valore iniziale del bottone
-        toggleButton.textContent = optionsArray[0]; // Di solito 'All' o la prima opzione
-        toggleButton.setAttribute('aria-label', `Selected: ${optionsArray[0]}`);
-
-        // Gestione click sul bottone (toggle)
-        toggleButton.addEventListener('click', () => {
-            customDropdownElement.classList.toggle('open');
-            const isOpen = customDropdownElement.classList.contains('open');
-            toggleButton.setAttribute('aria-expanded', isOpen);
-            // Chiudi le altre dropdown aperte
-            document.querySelectorAll('.custom-dropdown.open').forEach(otherDropdown => {
-                if (otherDropdown !== customDropdownElement) {
-                    otherDropdown.classList.remove('open');
-                    otherDropdown.querySelector('.dropdown-toggle').setAttribute('aria-expanded', false);
-                }
-            });
-        });
-
-        // Gestione click su un'opzione
-        optionsList.addEventListener('click', (e) => {
-            if (e.target.tagName === 'LI') {
-                const selectedValue = e.target.getAttribute('data-value');
-                const selectedText = e.target.textContent;
-
-                // Aggiorna il testo del bottone
-                toggleButton.textContent = selectedText;
-                toggleButton.setAttribute('aria-label', `Selected: ${selectedText}`);
-                customDropdownElement.classList.remove('open'); // Chiudi la dropdown
-                toggleButton.setAttribute('aria-expanded', false);
-
-                // Rimuovi classe 'selected' dagli altri e aggiungila a quello corrente
-                optionsList.querySelectorAll('li').forEach(li => li.classList.remove('selected'));
-                e.target.classList.add('selected');
-
-                // Chiama il callback per applicare il filtro
-                onChangeCallback(selectedValue);
-            }
-        });
-
-        // Chiudi la dropdown quando si clicca fuori
-        document.addEventListener('click', (e) => {
-            if (!customDropdownElement.contains(e.target)) {
-                customDropdownElement.classList.remove('open');
-                toggleButton.setAttribute('aria-expanded', false);
-            }
-        });
-
-        // Per accessibilità con tastiera (opzionale ma consigliato)
-        optionsList.addEventListener('keydown', (e) => {
-            const currentFocus = document.activeElement;
-            const options = Array.from(optionsList.children);
-            let nextFocusIndex = -1;
-
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                nextFocusIndex = options.indexOf(currentFocus) + 1;
-                if (nextFocusIndex >= options.length) nextFocusIndex = 0; // Loop
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                nextFocusIndex = options.indexOf(currentFocus) - 1;
-                if (nextFocusIndex < 0) nextFocusIndex = options.length - 1; // Loop
-            } else if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                if (currentFocus.tagName === 'LI') {
-                    currentFocus.click(); // Simula il click
-                }
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                customDropdownElement.classList.remove('open');
-                toggleButton.setAttribute('aria-expanded', false);
-                toggleButton.focus(); // Torna il focus al bottone
-            }
-
-            if (nextFocusIndex !== -1) {
-                options[nextFocusIndex].focus();
-            }
+    function populateFilterDropdown(selectElement, options) {
+        selectElement.innerHTML = '';
+        options.forEach(optionText => {
+            const option = document.createElement('option');
+            option.value = optionText.toLowerCase();
+            option.textContent = optionText;
+            selectElement.appendChild(option);
         });
     }
 
-    // Oggetti per memorizzare i valori selezionati delle custom dropdown
-    // Questi sostituiscono la proprietà `.value` dei <select> nativi
-    const selectedFilters = {
-        gameType: 'all', // Valore iniziale 'all'
-        gender: 'all'    // Valore iniziale 'all'
-    };
+    populateFilterDropdown(gameTypeFilter, gameTypes);
+    populateFilterDropdown(genderFilter, genders);
 
-    // Inizializza le dropdown personalizzate
-    setupCustomDropdown(customGameTypeFilter, gameTypes, (selectedValue) => {
-        selectedFilters.gameType = selectedValue; // Aggiorna il valore selezionato
-        filterAndDisplayEvents();
-    });
-
-    setupCustomDropdown(customGenderFilter, genders, (selectedValue) => {
-        selectedFilters.gender = selectedValue; // Aggiorna il valore selezionato
-        filterAndDisplayEvents();
-    });
 
     function createCustomMarkerIcon() {
         const iconClass = 'fas fa-map-marker-alt';
@@ -312,12 +180,11 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
     }
 
     function formatCostType(costTypeString) {
-        // Gestisci il caso in cui costTypeString sia null o undefined
-        return costTypeString ? costTypeDisplayNames[costTypeString.toLowerCase().replace(/\s/g, '')] || '' : '';
+        return costTypeDisplayNames[costTypeString] || '';
     }
 
     function getCurrencySymbol(currencyCode) {
-        return currencyCode ? currencySymbols[currencyCode.toLowerCase()] || '' : '';
+        return currencySymbols[currencyCode.toLowerCase()] || '';
     }
 
 
@@ -331,6 +198,7 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
 
         if (validEvents.length === 0) {
             console.warn("No valid events with numerical coordinates to display on map based on current filters.");
+            // Potresti mostrare un messaggio sulla mappa qui se vuoi
             return;
         }
 
@@ -374,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
                 case 'both':
                     genderIcon = '<i class="fas fa-venus-mars icon-margin-right"></i>';
                     break;
-                default: // Aggiunto un default anche qui per "mixed" e "other"
+                default:
                     genderIcon = '<i class="fas fa-user icon-margin-right"></i>';
                     break;
             }
@@ -410,14 +278,13 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
     function filterAndDisplayEvents() {
         const bounds = map.getBounds();
 
-        // Usa i valori selezionati dalle nuove "dropdown" personalizzate
-        const selectedGameType = selectedFilters.gameType;
-        const selectedGender = selectedFilters.gender;
+        const selectedGameType = gameTypeFilter.value;
+        const selectedGender = genderFilter.value;
 
         // Partiamo da 'futureEvents' che contiene già solo gli eventi futuri/in corso
         const filteredByDropdowns = futureEvents.filter(event => {
-            const eventTypeLower = event.type ? event.type.toLowerCase().replace(/\s/g, '') : ''; // Normalizza anche qui
-            const eventGenderLower = event.gender ? event.gender.toLowerCase().replace(/\s/g, '') : ''; // Normalizza anche qui
+            const eventTypeLower = event.type ? event.type.toLowerCase() : '';
+            const eventGenderLower = event.gender ? event.gender.toLowerCase() : '';
 
             const matchesGameType = (selectedGameType === 'all' || eventTypeLower === selectedGameType);
 
@@ -446,8 +313,7 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
         });
 
         // Anche gli eventi 'featured' devono essere tra quelli futuri
-        // E devono anche rispettare i filtri di dropdown (se Featured è filtrato in futureEvents, ok)
-        const allFeaturedEvents = filteredByDropdowns.filter(event => event.featured);
+        const allFeaturedEvents = futureEvents.filter(event => event.featured);
 
         const finalEventsToDisplayInList = new Map();
 
@@ -456,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
             finalEventsToDisplayInList.set(event.id, event);
         });
 
-        // Aggiungi tutti gli eventi featured (che sono già stati filtrati per essere futuri E per le dropdown)
+        // Aggiungi tutti gli eventi featured (che sono già stati filtrati per essere futuri)
         allFeaturedEvents.forEach(event => {
             finalEventsToDisplayInList.set(event.id, event);
         });
@@ -487,6 +353,7 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
         eventListDiv.innerHTML = '';
 
         if (eventsToDisplay.length === 0) {
+            // Messaggio aggiornato per riflettere i filtri temporali
             eventListDiv.innerHTML = '<p>Nessun evento futuro trovato con i filtri selezionati. Prova a cambiare i filtri o controlla se ci sono eventi featured.</p>';
             return;
         }
@@ -592,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
             const clickableTitle = eventItem.querySelector('.event-title-clickable');
             if (clickableTitle) {
                 clickableTitle.style.cursor = 'pointer';
-                clickableTitle.title = 'Clicca per vedere sulla mappa';
+                clickableTitle.title = 'Clicca per vedere sulla mappa'; // Tradotto
                 clickableTitle.addEventListener('click', () => {
                     zoomToEvent(event.latitude, event.longitude);
                 });
@@ -601,9 +468,8 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
     }
 
     map.on('moveend', filterAndDisplayEvents);
-    // RIMOSSO: Questi event listener non sono più necessari per i <select>
-    // gameTypeFilter.addEventListener('change', filterAndDisplayEvents);
-    // genderFilter.addEventListener('change', filterAndDisplayEvents);
+    gameTypeFilter.addEventListener('change', filterAndDisplayEvents);
+    genderFilter.addEventListener('change', filterAndDisplayEvents);
 
     loadEvents();
 });
