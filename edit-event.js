@@ -42,18 +42,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     const costTypes = ['Not Specified', 'Per Person', 'Per Team'];
 
 
-    function populateDropdown(selectElement, options, selectedValue = '') {
-        selectElement.innerHTML = '';
-        options.forEach(optionText => {
-            const option = document.createElement('option');
-            option.value = optionText.toLowerCase().replace(/\s/g, ''); // Rimuovi spazi per il valore
-            option.textContent = optionText;
-            if (option.value === selectedValue.toLowerCase().replace(/\s/g, '')) {
-                option.selected = true;
-            }
-            selectElement.appendChild(option);
-        });
-    }
+ function populateDropdown(selectElement, options, selectedValue = '') {
+    selectElement.innerHTML = '';
+    // Assicurati che selectedValue sia una stringa, anche se è null o undefined
+    const normalizedSelectedValue = (selectedValue || '').toLowerCase().replace(/\s/g, '');
+
+    options.forEach(optionText => {
+        const option = document.createElement('option');
+        option.value = optionText.toLowerCase().replace(/\s/g, '');
+        option.textContent = optionText;
+        
+        // Confronta con il valore normalizzato
+        if (option.value === normalizedSelectedValue) {
+            option.selected = true;
+        }
+        selectElement.appendChild(option);
+    });
+}
 
     populateDropdown(editEventTypeSelect, gameTypes);
     populateDropdown(editEventGenderSelect, genders);
