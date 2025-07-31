@@ -13,8 +13,6 @@ import {
 document.addEventListener('DOMContentLoaded', () => { // NON più async
     console.log('Script.js is loaded and DOM is ready. Starting map initialization...');
 
-    // ... (tutto il resto del tuo codice, dalla mappa ai filtri) ...
-
     const DEFAULT_LATITUDE = 41.9028;
     const DEFAULT_LONGITUDE = 12.4964;
     const DEFAULT_ZOOM = 5;
@@ -27,8 +25,30 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
+    // Funzioni per gestire gli eventi di geolocalizzazione
+    function onLocationFound(e) {
+        console.log("Geolocation found:", e.latlng, "Accuracy:", e.accuracy);
+        // Puoi aggiungere un messaggio visibile all'utente qui se lo desideri
+        // Esempio: messageDiv.textContent = `Posizione trovata con precisione: ${e.accuracy} metri.`;
+        // messageDiv.className = 'message success';
+        // setTimeout(() => messageDiv.textContent = '', 3000);
+    }
+
+    function onLocationError(e) {
+        console.error("Geolocation error:", e.message);
+        // Mostra un messaggio all'utente in caso di errore
+        messageDiv.textContent = `Errore di geolocalizzazione: ${e.message}. Usando la vista predefinita.`;
+        messageDiv.className = 'message error';
+        setTimeout(() => messageDiv.textContent = '', 5000); // Rimuove il messaggio dopo 5 secondi
+    }
+
+    // Aggiungi i listener per gli eventi di geolocalizzazione della mappa
+    map.on('locationfound', onLocationFound);
+    map.on('locationerror', onLocationError);
+
+
     if (navigator.geolocation) {
-        console.log("Geolocation is supported by this browser.");
+        console.log("Geolocation is supported by this browser. Attempting to locate...");
         map.locate({
             setView: true,
             maxZoom: 5,
@@ -38,6 +58,8 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
         });
     } else {
         console.log("Geolocation is not supported by this browser. Using default map view.");
+        messageDiv.textContent = 'Il tuo browser non supporta la geolocalizzazione.';
+        messageDiv.className = 'message error';
     }
 
     const eventListDiv = document.getElementById('event-list');
@@ -47,12 +69,13 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
     const genderFilter = document.getElementById('genderFilter');
 
     let markers = L.featureGroup().addTo(map);
-    let allEvents = []; // Contains all loaded events
+    let allEvents = []; // Contiene tutti gli eventi caricati da JSONBin.io
+    let futureEvents = []; // Contiene solo gli eventi futuri e attivi
 
     const gameTypes = ['All', 'Field', 'Box', 'Sixes', 'Clinic', 'Other'];
     const genders = ['All', 'Men', 'Women', 'Both', 'Mixed', 'Other'];
 
-    const costTypeOptions = ['Not Specified', 'Per Person', 'Per Team'];
+    const costTypeOptions = ['Not Specified', 'Per Person', 'Per Team']; // Non usata direttamente qui ma lasciata
     const currencySymbols = {
         'usd': '$',
         'eur': '€',
@@ -88,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
 
     function createCustomMarkerIcon() {
         const iconClass = 'fas fa-map-marker-alt';
-        const iconColor = '#22454C';
+        const iconColor = '#22454C'; // Un colore scuro per il marker
 
         return L.divIcon({
             className: 'custom-marker',
@@ -98,6 +121,30 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
             popupAnchor: [0, -40]
         });
     }
+
+    /**
+     * Determina se un evento è futuro o è ancora in corso.
+     * Un evento è considerato futuro se la sua data di fine (o di inizio, se la fine non è specificata)
+     * è uguale o successiva alla data odierna (considerando la fine del giorno corrente).
+     * @param {object} event L'oggetto evento da controllare.
+     * @returns {boolean} True se l'evento è futuro o in corso, altrimenti false.
+     */
+    function isEventFuture(event) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Inizio del giorno corrente (per confronto)
+
+        const startDate = new Date(event.startDate);
+        // Usa endDate se presente e valida, altrimenti usa startDate come data di riferimento
+        const endDate = event.endDate ? new Date(event.endDate) : startDate;
+
+        // Imposta l'ora alla fine del giorno per endDate per includere eventi che finiscono oggi
+        endDate.setHours(23, 59, 59, 999);
+
+        // L'evento è considerato futuro/in corso se la sua data di fine è >= oggi.
+        // Se endDate è precedente a today, l'evento è nel passato.
+        return endDate >= today;
+    }
+
 
     async function loadEvents() {
         try {
@@ -118,6 +165,10 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
             const data = await response.json();
             allEvents = Array.isArray(data.record) ? data.record : [];
             console.log('All events loaded:', allEvents);
+
+            // Filtra gli eventi futuri/in corso subito dopo il caricamento
+            futureEvents = allEvents.filter(isEventFuture);
+            console.log('Future events (filtered):', futureEvents);
 
             filterAndDisplayEvents();
 
@@ -146,12 +197,13 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
         );
 
         if (validEvents.length === 0) {
-            console.warn("No valid events with numerical coordinates to display on map.");
+            console.warn("No valid events with numerical coordinates to display on map based on current filters.");
+            // Potresti mostrare un messaggio sulla mappa qui se vuoi
             return;
         }
 
         validEvents.forEach(event => {
-            const customIcon = createCustomMarkerIcon(event.type);
+            const customIcon = createCustomMarkerIcon(); // Non passi event.type qui, l'icona è generica
 
             const marker = L.marker([event.latitude, event.longitude], {
                 icon: customIcon
@@ -229,40 +281,55 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
         const selectedGameType = gameTypeFilter.value;
         const selectedGender = genderFilter.value;
 
-        const filteredByDropdowns = allEvents.filter(event => {
+        // Partiamo da 'futureEvents' che contiene già solo gli eventi futuri/in corso
+        const filteredByDropdowns = futureEvents.filter(event => {
             const eventTypeLower = event.type ? event.type.toLowerCase() : '';
             const eventGenderLower = event.gender ? event.gender.toLowerCase() : '';
 
             const matchesGameType = (selectedGameType === 'all' || eventTypeLower === selectedGameType);
 
-            let matchesGender = (selectedGender === 'all' || eventGenderLower === selectedGender);
-            if (selectedGender === 'both' && (eventGenderLower === 'men' || eventGenderLower === 'women')) {
-                matchesGender = true;
+            let matchesGender = (selectedGender === 'all'); // Inizializza a true se il filtro è 'all'
+
+            // Gestione specifica per il filtro 'Both'
+            if (selectedGender === 'both') {
+                if (eventGenderLower === 'men' || eventGenderLower === 'women' || eventGenderLower === 'both' || eventGenderLower === 'mixed') {
+                    matchesGender = true;
+                } else {
+                    matchesGender = false; // Se è 'both' ma l'evento è 'other', non match
+                }
+            } else if (selectedGender !== 'all') { // Se un filtro specifico (men, women, mixed, other) è selezionato
+                matchesGender = (eventGenderLower === selectedGender);
             }
+            // else se selectedGender è 'all', matchesGender rimane true per tutti
 
             return matchesGameType && matchesGender;
         });
 
+        // Eventi da visualizzare nella lista HTML (quelli dentro i bounds della mappa + featured)
         let eventsForHtmlList = filteredByDropdowns.filter(event => {
             return (typeof event.latitude === 'number' && typeof event.longitude === 'number' &&
                 !isNaN(event.latitude) && !isNaN(event.longitude) &&
                 bounds.contains(L.latLng(event.latitude, event.longitude)));
         });
 
-        const allFeaturedEvents = allEvents.filter(event => event.featured);
+        // Anche gli eventi 'featured' devono essere tra quelli futuri
+        const allFeaturedEvents = futureEvents.filter(event => event.featured);
 
         const finalEventsToDisplayInList = new Map();
 
+        // Aggiungi gli eventi visibili sulla mappa (e filtrati dai dropdown)
         eventsForHtmlList.forEach(event => {
             finalEventsToDisplayInList.set(event.id, event);
         });
 
+        // Aggiungi tutti gli eventi featured (che sono già stati filtrati per essere futuri)
         allFeaturedEvents.forEach(event => {
             finalEventsToDisplayInList.set(event.id, event);
         });
 
         const finalEventsArray = Array.from(finalEventsToDisplayInList.values());
 
+        // Eventi per i marker della mappa (tutti quelli filtrati dai dropdown e futuri)
         const eventsForMapMarkers = filteredByDropdowns;
 
         displayEventsListHtml(finalEventsArray);
@@ -286,14 +353,17 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
         eventListDiv.innerHTML = '';
 
         if (eventsToDisplay.length === 0) {
-            eventListDiv.innerHTML = '<p>No tournaments found with the selected filters or no featured events.</p>';
+            // Messaggio aggiornato per riflettere i filtri temporali
+            eventListDiv.innerHTML = '<p>Nessun evento futuro trovato con i filtri selezionati. Prova a cambiare i filtri o controlla se ci sono eventi featured.</p>';
             return;
         }
 
         eventsToDisplay.sort((a, b) => {
+            // Prima gli eventi featured
             if (a.featured && !b.featured) return -1;
             if (!a.featured && b.featured) return 1;
 
+            // Poi per data di inizio crescente
             return new Date(a.startDate) - new Date(b.startDate);
         });
 
@@ -389,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
             const clickableTitle = eventItem.querySelector('.event-title-clickable');
             if (clickableTitle) {
                 clickableTitle.style.cursor = 'pointer';
-                clickableTitle.title = 'Click to view on map';
+                clickableTitle.title = 'Clicca per vedere sulla mappa'; // Tradotto
                 clickableTitle.addEventListener('click', () => {
                     zoomToEvent(event.latitude, event.longitude);
                 });
