@@ -3,108 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add New Event - LaxMap</title>
+    <title>Add Tournament/Event</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
     <div id="header-placeholder"></div>
 
     <main>
         <div class="container">
-            <h2>Add New Lacrosse Event</h2>
+            <h2>Add New Tournament/Event</h2>
             <form id="addEventForm">
                 <div class="form-group">
                     <label for="eventName">Event Name:</label>
-                    <input type="text" id="eventName" required class="full-width-input"> </div>
+                    <input type="text" id="eventName" required>
+                </div>
 
                 <div class="form-group">
                     <label for="eventLocation">Location (City, Country):</label>
-                    <input type="text" id="eventLocation" placeholder="e.g., Rome, Italy" required class="full-width-input">
+                    <input type="text" id="eventLocation" required>
                     <small>Type a city and click outside the box to get coordinates.</small>
                 </div>
 
+                <div class="form-group">
+                    <label for="latitude">Latitude:</label>
+                    <input type="number" id="latitude" step="any">
+                </div>
+                <div class="form-group">
+                    <label for="longitude">Longitude:</label>
+                    <input type="number" id="longitude" step="any">
+                </div>
                 <div id="geolocationMessage" class="message" style="margin-top: 5px; margin-bottom: 15px;"></div>
 
                 <div class="form-group">
-                    <label for="latitude">Latitude:</label>
-                    <input type="text" id="latitude" step="any" class="full-width-input" readonly> </div>
-                <div class="form-group">
-                    <label for="longitude">Longitude:</label>
-                    <input type="text" id="longitude" step="any" class="full-width-input" readonly> </div>
-
-               <div id="customEventType" class="custom-dropdown">
-					<label for="customEventGender">Game Type:</label>
-					<button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="eventTypeOptions">Select Game Type</button>
-					<ul class="dropdown-options" role="listbox" id="eventTypeOptions">
-						</ul>
-				</div>
-
-                <div class="form-group">
-                    <label for="customEventGender">Gender:</label>
-                    <div id="customEventGender" class="custom-dropdown">
-					<button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="eventGenderOptions">Select Gender</button>
-					<ul class="dropdown-options" role="listbox" id="eventGenderOptions">
-						</ul>
-					</div>
+                    <label for="customEventType">Game Type:</label>
+                    <div id="customEventType" class="custom-dropdown">
+                        <button type="button" class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="eventTypeOptions">Select Game Type</button>
+                        <ul class="dropdown-options" role="listbox" id="eventTypeOptions"></ul>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="eventCost">Cost (optional):</label>
+                    <label for="customGenderType">Gender:</label>
+                    <div id="customGenderType" class="custom-dropdown">
+                        <button type="button" class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="genderOptions">Select Gender</button>
+                        <ul class="dropdown-options" role="listbox" id="genderOptions"></ul>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventCost">Cost:</label>
                     <div class="cost-details">
-                        <input type="number" id="eventCost" step="0.01" min="0" placeholder="e.g., 25.00" class="full-width-input-inline"> <div id="customEventCurrency" class="custom-dropdown full-width-input-inline">
-                            <button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="eventCurrencyOptions">Select Currency</button>
-                            <ul class="dropdown-options" role="listbox" id="eventCurrencyOptions">
-                                </ul>
+                        <input type="number" id="eventCost" step="0.01" min="0" placeholder="e.g., 25.00" class="full-width-input-inline">
+
+                        <div id="customCurrencyType" class="custom-dropdown full-width-input-inline">
+                            <button type="button" class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="currencyOptions">Select Currency</button>
+                            <ul class="dropdown-options" role="listbox" id="currencyOptions"></ul>
                         </div>
 
                         <div id="customCostType" class="custom-dropdown full-width-input-inline">
-                            <button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="costTypeOptions">Not Specified</button>
-                            <ul class="dropdown-options" role="listbox" id="costTypeOptions">
-                                </ul>
+                            <button type="button" class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="costTypeOptions">Not Specified</button>
+                            <ul class="dropdown-options" role="listbox" id="costTypeOptions"></ul>
                         </div>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="eventStartDate">Start Date:</label>
-                    <input type="date" id="eventStartDate" required class="full-width-input">
+                    <input type="date" id="eventStartDate" required>
                 </div>
-
                 <div class="form-group">
-                    <label for="eventEndDate">End Date (optional, if multi-day):</label>
-                    <input type="date" id="eventEndDate" class="full-width-input">
-                    <small>Leave blank if it's a single-day event.</small>
+                    <label for="eventEndDate">End Date:</label>
+                    <input type="date" id="eventEndDate">
                 </div>
 
                 <div class="form-group">
                     <label for="eventDescription">Description:</label>
-                    <textarea id="eventDescription" rows="4" required class="full-width-input"></textarea>
+                    <textarea id="eventDescription" rows="4"></textarea>
                 </div>
 
                 <div class="form-group">
                     <label for="eventLink">More Info Link (optional):</label>
-                    <input type="url" id="eventLink" placeholder="e.g., https://example.com/event-info" class="full-width-input">
+                    <input type="url" id="eventLink" placeholder="e.g., https://example.com/more-info">
                 </div>
 
                 <div class="form-group">
-                    <label for="contactEmail">Contact Email (optional):</label>
-                    <input type="text" id="contactEmail" placeholder="e.g., info@yourevent.com" class="full-width-input">
+                    <label for="contactEmail">Contact Email (Optional):</label>
+                    <input type="email" id="contactEmail" placeholder="e.g., info@yourevent.com">
                 </div>
 
-                <button type="submit" id="addEventButton" class="button">Add Event</button>
+                <button type="submit">Add Event</button>
             </form>
-            <div id="message"></div>
+            <div id="message" class="message"></div>
         </div>
     </main>
+
     <div id="footer-placeholder"></div>
+
     <script src="include.js"></script>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script type="module" src="add-event.js"></script>
     <script src="load-header.js"></script>
+    <script type="module" src="add-event.js"></script>
 </body>
 </html>
