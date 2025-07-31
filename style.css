@@ -1015,50 +1015,115 @@ form input[type="image"] {
     }
 }
 
-/* Regole per rimuovere il pulsante clear su IE/Edge */
-.custom-date-input input[type="date"]::-ms-clear {
-    display: none;
-    width: 0;
-    height: 0;
-}
 
-/* Regole per rimuovere la freccia su Firefox */
-.custom-date-input input[type="date"]::-moz-calendar-picker {
-    display: none;
-}
-
-
-/* Stile per il focus dell'input data */
-.custom-date-input input[type="date"]:focus {
-    outline: none;
-    /* Il bordo e l'ombra del parent .custom-date-input verranno gestiti */
-}
-
-/* Aggiunge l'icona del calendario come pseudo-elemento */
-.custom-date-input::after {
-    content: '\f073'; /* Unicode per l'icona del calendario di Font Awesome (fa-calendar-alt) */
-    font-family: 'Font Awesome 5 Free'; /* Specifica il font di Font Awesome */
-    font-weight: 900; /* Per le icone "Solid" di Font Awesome */
-    font-size: 1.2em; /* Dimensione dell'icona */
-    color: #555; /* Colore dell'icona (un grigio scuro, puoi cambiarlo in #000 per nero puro) */
-    padding-right: 10px; /* Spazio a destra dell'icona */
-    pointer-events: none; /* L'icona non deve catturare il click */
-    display: flex; /* Per centrare l'icona */
+/* Questi stili base si applicano sempre, ma saranno modificati dalle media queries */
+.custom-date-input {
+    position: relative;
+    width: 100%;
+    display: flex;
     align-items: center;
-    justify-content: center;
-    height: 100%; /* Altezza dell'icona come il contenitore */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
-/* Stile del bordo e dell'ombra al focus del contenitore, come per le dropdown */
-.custom-date-input:focus-within { /* Applica gli stili quando un elemento al suo interno è a fuoco */
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+.custom-date-input input[type="date"] {
+    flex-grow: 1;
+    padding: 10px 15px;
+    border: none;
+    background: transparent;
+    color: #333;
+    font-family: Arial, sans-serif;
+    font-size: 1em;
+    cursor: pointer;
+    box-sizing: border-box;
+
+    /* Per desktop, vogliamo che queste regole non si applichino di default */
+    /* Le sposteremo all'interno della media query per mobile */
+
+    /* Stile del bordo e dell'ombra al focus del contenitore, come per le dropdown */
+    /* Questo si può lasciare qui perché l'effetto visivo sarà sul div wrapper */
+    &:focus-within { /* Applica gli stili quando un elemento al suo interno è a fuoco */
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    }
 }
 
-/* Media query per mobile per assicurare un buon tocco */
+/* Nascondiamo l'icona personalizzata di default (per desktop) */
+.custom-date-input::after {
+    display: none; /* Nasconde l'icona personalizzata su desktop */
+}
+
+/* Anche le regole per nascondere le icone native le mettiamo solo per mobile */
+.custom-date-input input[type="date"] {
+    /* Le regole per nascondere le frecce native (come -webkit-appearance)
+       le applicheremo solo dentro la media query per mobile.
+       Qui le rimuoviamo per default (desktop). */
+    -webkit-appearance: initial; /* Resetta a default */
+    -moz-appearance: initial;    /* Resetta a default */
+    appearance: initial;         /* Resetta a default */
+
+    /* Resetta anche le altre regole specifiche per nascondere su IE/Firefox */
+    &::-ms-expand {
+        display: initial;
+    }
+}
+
+.custom-date-input input[type="date"]::-ms-clear {
+    display: initial;
+    width: initial;
+    height: initial;
+}
+
+.custom-date-input input[type="date"]::-moz-calendar-picker {
+    display: initial;
+}
+
+
+/* --- SOLO PER MOBILE (fino a 768px di larghezza) --- */
 @media (max-width: 768px) {
     .custom-date-input input[type="date"] {
         min-height: 44px; /* Altezza minima raccomandata per elementi interattivi su mobile */
         font-size: 1.1em; /* Leggermente più grande per leggibilità */
+
+        /* Nasconde la freccia/icona nativa su mobile */
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+
+        /* Aggiunta specifica per nascondere l'icona su Internet Explorer/Edge */
+        &::-ms-expand {
+            display: none;
+        }
+    }
+
+    /* Regole per rimuovere il pulsante clear su IE/Edge */
+    .custom-date-input input[type="date"]::-ms-clear {
+        display: none;
+        width: 0;
+        height: 0;
+    }
+
+    /* Regole per rimuovere la freccia su Firefox */
+    .custom-date-input input[type="date"]::-moz-calendar-picker {
+        display: none;
+    }
+
+    /* Mostra l'icona personalizzata solo su mobile */
+    .custom-date-input::after {
+        content: '\f133'; /* Unicode per l'icona del calendario di Font Awesome (fa-calendar-alt) */
+        font-family: 'Font Awesome 5 Free'; /* Specifica il font di Font Awesome */
+        font-weight: 900; /* Per le icone "Solid" di Font Awesome */
+        font-size: 1.2em;
+        color: #555; /* O #000 per nero puro */
+        padding-right: 10px;
+        pointer-events: none;
+        display: flex; /* Mostra l'icona */
+        align-items: center;
+        justify-content: center;
+        height: 100%;
     }
 }
