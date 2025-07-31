@@ -870,42 +870,32 @@ form input[type="image"] {
 /* Custom Dropdown Styling */
 .custom-dropdown {
     position: relative;
-    display: block; /* CAMBIATO QUI: da inline-block a block */
-    width: 100%; /* Occupa l'intera larghezza disponibile */
-    font-family: Arial, sans-serif; /* Assicurati che il font sia consistente */
-    /* Aggiungo un po' di margine per separare le dropdown nel form, se non lo hai già con form label */
-    margin-bottom: 15px; 
+    /* display: block; Rimuovi o rendilo più specifico se alcune devono essere inline-block */
+    /* width: 100%; Rimuovi questa riga qui */
+    font-family: Arial, sans-serif;
+    margin-bottom: 15px; /* Giusto per separare i blocchi */
 }
 
 .custom-dropdown .dropdown-toggle {
-    background-color: #fff; /* Sfondo del bottone */
+    background-color: #fff;
     color: #333;
     padding: 10px 15px;
     border: 1px solid #ccc;
     border-radius: 4px;
     cursor: pointer;
-    width: 100%;
+    width: 100%; /* Lascia width: 100% qui, così il bottone occupa tutto lo spazio disponibile del suo contenitore */
     text-align: left;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-sizing: border-box; /* Include padding e border nella larghezza */
-    -webkit-appearance: none; /* Rimuove lo stile nativo del bottone */
+    box-sizing: border-box;
+    -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    font-size: 1em; /* Assicurati la dimensione del font */
+    font-size: 1em;
 }
 
-.custom-dropdown .dropdown-toggle::after {
-    content: '\25BC'; /* Freccia giù */
-    font-size: 0.8em;
-    margin-left: 10px;
-    transition: transform 0.3s ease;
-}
-
-.custom-dropdown.open .dropdown-toggle::after {
-    transform: rotate(180deg); /* Freccia su quando aperto */
-}
+/* ... il resto del CSS per .dropdown-toggle e ::after ... */
 
 .custom-dropdown .dropdown-options {
     list-style: none;
@@ -916,12 +906,58 @@ form input[type="image"] {
     border: 1px solid #ccc;
     border-top: none;
     border-radius: 0 0 4px 4px;
-    width: 100%;
-    max-height: 200px; /* Limita l'altezza e aggiunge scroll */
+    width: 100%; /* Questo 100% si riferisce alla larghezza del .custom-dropdown genitore */
+    max-height: 200px;
     overflow-y: auto;
-    z-index: 1000; /* Assicurati che sia sopra altri elementi */
+    z-index: 1000;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    display: none; /* Nascosto di default */
+    display: none;
+    left: 0; /* Assicurati che parta dall'inizio del genitore */
+    top: 100%; /* Assicurati che si apra proprio sotto il toggle button */
+}
+
+.custom-dropdown.open .dropdown-options {
+    display: block;
+}
+
+/* ... il resto del CSS per le opzioni e li ... */
+
+/* Le regole per full-width-input-inline e cost-details rimangono invariate */
+.full-width-input-inline {
+    width: calc(33.33% - 10px);
+    box-sizing: border-box;
+    display: inline-block;
+    margin-right: 10px;
+    vertical-align: top;
+    margin-bottom: 0;
+}
+
+.cost-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.cost-details .custom-dropdown {
+    display: inline-block; /* Questo è fondamentale per il layout a 3 colonne */
+    width: calc(33.33% - 10px);
+    margin-bottom: 0;
+}
+
+/* E la media query per il mobile è corretta */
+@media (max-width: 768px) {
+    .full-width-input-inline,
+    .cost-details .custom-dropdown {
+        width: 100%;
+        display: block;
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    .cost-details {
+        flex-direction: column;
+        gap: 0;
+    }
 }
 
 .custom-dropdown.open .dropdown-options {
