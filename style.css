@@ -1005,10 +1005,28 @@ form input[type="image"] {
     box-sizing: border-box; /* Importante per padding e larghezza */
 
     /* Nasconde la freccia/icona nativa su alcuni browser */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
+    -webkit-appearance: none; /* Per Chrome, Safari, Edge */
+    -moz-appearance: none;    /* Per Firefox */
+    appearance: none;         /* Standard */
+
+    /* Aggiunta specifica per nascondere l'icona su Internet Explorer/Edge */
+    &::-ms-expand {
+        display: none;
+    }
 }
+
+/* Regole per rimuovere il pulsante clear su IE/Edge */
+.custom-date-input input[type="date"]::-ms-clear {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+/* Regole per rimuovere la freccia su Firefox */
+.custom-date-input input[type="date"]::-moz-calendar-picker {
+    display: none;
+}
+
 
 /* Stile per il focus dell'input data */
 .custom-date-input input[type="date"]:focus {
@@ -1018,11 +1036,11 @@ form input[type="image"] {
 
 /* Aggiunge l'icona del calendario come pseudo-elemento */
 .custom-date-input::after {
-    content: '\1F4C5'; /* Unicode per l'emoji del calendario (o puoi usare un'altra icona CSS) */
-    font-family: 'Font Awesome 5 Free', 'Arial Unicode MS', sans-serif; /* Se usi Font Awesome */
-    font-weight: 900; /* Per Font Awesome Solid */
+    content: '\f133'; /* Unicode per l'icona del calendario di Font Awesome (fa-calendar-alt) */
+    font-family: 'Font Awesome 5 Free'; /* Specifica il font di Font Awesome */
+    font-weight: 900; /* Per le icone "Solid" di Font Awesome */
     font-size: 1.2em; /* Dimensione dell'icona */
-    color: #555; /* Colore dell'icona */
+    color: #555; /* Colore dell'icona (un grigio scuro, puoi cambiarlo in #000 per nero puro) */
     padding-right: 10px; /* Spazio a destra dell'icona */
     pointer-events: none; /* L'icona non deve catturare il click */
     display: flex; /* Per centrare l'icona */
