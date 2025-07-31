@@ -22,8 +22,7 @@
                     <input class="full-width-input" type="text" id="searchEventId" placeholder="Enter the unique event ID" required>
                 </div>
                 </br>
-                <button type="submit" id="searchButton" class="edit-button">Search Event</button>
-            </div>
+                <button type="button" id="searchButton" class="edit-button">Search Event</button> </div>
 
             
             <div id="eventEditFormContainer" style="display: none;">
@@ -53,37 +52,33 @@
                     <div id="geolocationMessage" class="message" style="margin-top: 5px; margin-bottom: 15px;"></div>
 
                     <div class="form-group">
-						<label for="customEventType">Game Type:</label>
-						<div id="customEventType" class="custom-dropdown">
-							<button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="eventTypeOptions">Select Game Type</button>
-							<ul class="dropdown-options" role="listbox" id="eventTypeOptions"></ul>
-						</div>
-					</div>
+                        <label for="customEventType">Game Type:</label>
+                        <div id="customEventType" class="custom-dropdown">
+                            <button type="button" class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="eventTypeOptions">Select Game Type</button> <ul class="dropdown-options" role="listbox" id="eventTypeOptions"></ul>
+                        </div>
+                    </div>
 
-					<div class="form-group">
-						<label for="customEventGender">Gender:</label>
-						<div id="customEventGender" class="custom-dropdown">
-							<button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="eventGenderOptions">Select Gender</button>
-							<ul class="dropdown-options" role="listbox" id="eventGenderOptions"></ul>
-						</div>
-					</div>
-					
-					<div class="form-group">
-						<label for="editEventCost">Cost:</label>
-						<div class="cost-details">
-							<input type="number" id="editEventCost" step="0.01" min="0" placeholder="e.g., 25.00" class="full-width-input-inline">
-							
-							<div id="customEventCurrency" class="custom-dropdown full-width-input-inline">
-								<button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="currencyOptions">Select Currency</button>
-								<ul class="dropdown-options" role="listbox" id="currencyOptions"></ul>
-							</div>
-							
-							<div id="customCostType" class="custom-dropdown full-width-input-inline">
-								<button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="costTypeOptions">Not Specified</button>
-								<ul class="dropdown-options" role="listbox" id="costTypeOptions"></ul>
-							</div>
-						</div>
-					</div>
+                    <div class="form-group">
+                        <label for="customEventGender">Gender:</label>
+                        <div id="customEventGender" class="custom-dropdown">
+                            <button type="button" class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="eventGenderOptions">Select Gender</button> <ul class="dropdown-options" role="listbox" id="eventGenderOptions"></ul>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editEventCost">Cost:</label>
+                        <div class="cost-details">
+                            <input type="number" id="editEventCost" step="0.01" min="0" placeholder="e.g., 25.00" class="full-width-input-inline">
+                            
+                            <div id="customEventCurrency" class="custom-dropdown full-width-input-inline">
+                                <button type="button" class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="currencyOptions">Select Currency</button> <ul class="dropdown-options" role="listbox" id="currencyOptions"></ul>
+                            </div>
+                            
+                            <div id="customCostType" class="custom-dropdown full-width-input-inline">
+                                <button type="button" class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="costTypeOptions">Not Specified</button> <ul class="dropdown-options" role="listbox" id="costTypeOptions"></ul>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="form-group">
                         <label for="editEventStartDate">Start Date:</label>
