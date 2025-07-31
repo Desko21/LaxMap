@@ -1036,7 +1036,7 @@ form input[type="image"] {
 
 /* Aggiunge l'icona del calendario come pseudo-elemento */
 .custom-date-input::after {
-    content: '\f133'; /* Unicode per l'icona del calendario di Font Awesome (fa-calendar-alt) */
+    content: '\f073'; /* Unicode per l'icona del calendario di Font Awesome (fa-calendar-alt) */
     font-family: 'Font Awesome 5 Free'; /* Specifica il font di Font Awesome */
     font-weight: 900; /* Per le icone "Solid" di Font Awesome */
     font-size: 1.2em; /* Dimensione dell'icona */
