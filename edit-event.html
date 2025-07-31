@@ -17,14 +17,15 @@
         <div class="container">
             <div class="form-section">
                 <h2>Search Event by ID</h2>
-                
+
                 <div class="form-group">
                     <input class="full-width-input" type="text" id="searchEventId" placeholder="Enter the unique event ID" required>
                 </div>
                 </br>
-                <button type="button" id="searchButton" class="edit-button">Search Event</button> </div>
+                <button type="button" id="searchButton" class="edit-button">Search Event</button>
+            </div>
 
-            
+
             <div id="eventEditFormContainer" style="display: none;">
                 <h2>Event Details</h2>
                 <form id="editEventForm">
@@ -54,28 +55,29 @@
                     <div class="form-group">
                         <label for="customEventType">Game Type:</label>
                         <div id="customEventType" class="custom-dropdown">
-                            <button type="button" class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="eventTypeOptions">Select Game Type</button> <ul class="dropdown-options" role="listbox" id="eventTypeOptions"></ul>
+                            <button type="button" class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="eventTypeOptions">Select Game Type</button>
+                            <ul class="dropdown-options" role="listbox" id="eventTypeOptions"></ul>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="customEventGender">Gender:</label>
-                        <div id="customEventGender" class="custom-dropdown">
-                            <button type="button" class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="eventGenderOptions">Select Gender</button> <ul class="dropdown-options" role="listbox" id="eventGenderOptions"></ul>
+                        <label for="customGenderType">Gender:</label> <div id="customGenderType" class="custom-dropdown"> <button type="button" class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="eventGenderOptions">Select Gender</button>
+                            <ul class="dropdown-options" role="listbox" id="eventGenderOptions"></ul>
                         </div>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="editEventCost">Cost:</label>
                         <div class="cost-details">
                             <input type="number" id="editEventCost" step="0.01" min="0" placeholder="e.g., 25.00" class="full-width-input-inline">
-                            
-                            <div id="customEventCurrency" class="custom-dropdown full-width-input-inline">
-                                <button type="button" class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="currencyOptions">Select Currency</button> <ul class="dropdown-options" role="listbox" id="currencyOptions"></ul>
+
+                            <div id="customCurrencyType" class="custom-dropdown full-width-input-inline"> <button type="button" class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="currencyOptions">Select Currency</button>
+                                <ul class="dropdown-options" role="listbox" id="currencyOptions"></ul>
                             </div>
-                            
+
                             <div id="customCostType" class="custom-dropdown full-width-input-inline">
-                                <button type="button" class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="costTypeOptions">Not Specified</button> <ul class="dropdown-options" role="listbox" id="costTypeOptions"></ul>
+                                <button type="button" class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="costTypeOptions">Not Specified</button>
+                                <ul class="dropdown-options" role="listbox" id="costTypeOptions"></ul>
                             </div>
                         </div>
                     </div>
@@ -104,7 +106,7 @@
                         <input type="email" id="editContactEmail" placeholder="e.g., info@yourevent.com" class="full-width-input">
                     </div>
 
-                    
+
                     <button type="submit" id="saveChangesButton" class="button">Save Changes</button>
                     <button type="button" id="deleteEventButton" class="button delete-button">Delete Event</button>
                 </form>
