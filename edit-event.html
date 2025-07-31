@@ -52,17 +52,22 @@
                     </div>
                     <div id="geolocationMessage" class="message" style="margin-top: 5px; margin-bottom: 15px;"></div>
 
-                    <div class="form-group">
-                        <label for="editEventType">Game Type:</label>
-                        <select id="editEventType" required class="full-width-input">
-                            </select>
-                    </div>
+                    
+				   <div id="customEventType" class="custom-dropdown">
+						<label for="customEventGender">Game Type:</label>
+						<button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="eventTypeOptions">Select Game Type</button>
+						<ul class="dropdown-options" role="listbox" id="eventTypeOptions">
+							</ul>
+					</div>
 
-                    <div class="form-group">
-                        <label for="editEventGender">Gender:</label>
-                        <select id="editEventGender" required class="full-width-input">
-                            </select>
-                    </div>
+					<div class="form-group">
+						<label for="customEventGender">Gender:</label>
+						<div id="customEventGender" class="custom-dropdown">
+						<button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="eventGenderOptions">Select Gender</button>
+						<ul class="dropdown-options" role="listbox" id="eventGenderOptions">
+							</ul>
+						</div>
+					</div>
 
                     <div class="form-group">
                         <label for="editEventStartDate">Start Date:</label>
