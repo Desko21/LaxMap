@@ -9,6 +9,7 @@
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
     <div id="header-placeholder"></div>
@@ -53,16 +54,22 @@
                     <div id="geolocationMessage" class="message" style="margin-top: 5px; margin-bottom: 15px;"></div>
 
                     <div class="form-group">
-                        <label for="editEventType">Game Type:</label>
-                        <select id="editEventType" required class="full-width-input">
-                            </select>
-                    </div>
+                        <label for="customEditEventType">Game Type:</label>
+                        <div id="customEditEventType" class="custom-dropdown full-width-input">
+                            <button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="editEventTypeOptions"></button>
+                            <ul class="dropdown-options" role="listbox" id="editEventTypeOptions">
+                                </ul>
+                        </div>
+                        </div>
 
                     <div class="form-group">
-                        <label for="editEventGender">Gender:</label>
-                        <select id="editEventGender" required class="full-width-input">
-                            </select>
-                    </div>
+                        <label for="customEditEventGender">Gender:</label>
+                        <div id="customEditEventGender" class="custom-dropdown full-width-input">
+                            <button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="editEventGenderOptions"></button>
+                            <ul class="dropdown-options" role="listbox" id="editEventGenderOptions">
+                                </ul>
+                        </div>
+                        </div>
 
                     <div class="form-group">
                         <label for="editEventStartDate">Start Date:</label>
@@ -94,16 +101,22 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="currencyType">Currency:</label>
-                        <select id="currencyType" class="full-width-input">
-                            </select>
-                    </div>
+                        <label for="customCurrencyType">Currency:</label>
+                        <div id="customCurrencyType" class="custom-dropdown full-width-input">
+                            <button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="currencyTypeOptions"></button>
+                            <ul class="dropdown-options" role="listbox" id="currencyTypeOptions">
+                                </ul>
+                        </div>
+                        </div>
                     
                     <div class="form-group">
-                        <label for="costType">Cost Type:</label>
-                        <select id="costType" class="full-width-input">
-                            </select>
-                    </div>
+                        <label for="customCostType">Cost Type:</label>
+                        <div id="customCostType" class="custom-dropdown full-width-input">
+                            <button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="costTypeOptions"></button>
+                            <ul class="dropdown-options" role="listbox" id="costTypeOptions">
+                                </ul>
+                        </div>
+                        </div>
 
                     
                     <button type="submit" id="saveChangesButton" class="button">Save Changes</button>
