@@ -9,6 +9,7 @@
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
     <div id="header-placeholder"></div>
@@ -19,12 +20,11 @@
             <form id="addEventForm">
                 <div class="form-group">
                     <label for="eventName">Event Name:</label>
-                    <input type="text" id="eventName" required>
-                </div>
+                    <input type="text" id="eventName" required class="full-width-input"> </div>
 
                 <div class="form-group">
                     <label for="eventLocation">Location (City, Country):</label>
-                    <input type="text" id="eventLocation" placeholder="e.g., Rome, Italy" required>
+                    <input type="text" id="eventLocation" placeholder="e.g., Rome, Italy" required class="full-width-input">
                     <small>Type a city and click outside the box to get coordinates.</small>
                 </div>
 
@@ -32,69 +32,71 @@
 
                 <div class="form-group">
                     <label for="latitude">Latitude:</label>
-                    <input type="text" id="latitude" step="any">
-                </div>
+                    <input type="text" id="latitude" step="any" class="full-width-input" readonly> </div>
                 <div class="form-group">
                     <label for="longitude">Longitude:</label>
-                    <input type="text" id="longitude" step="any">
+                    <input type="text" id="longitude" step="any" class="full-width-input" readonly> </div>
+
+                <div class="form-group">
+                    <label for="customEventType">Game Type:</label>
+                    <div id="customEventType" class="custom-dropdown full-width-input">
+                        <button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="eventTypeOptions">Select Game Type</button>
+                        <ul class="dropdown-options" role="listbox" id="eventTypeOptions">
+                            </ul>
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="gameTypeFilter">Game Type:</label>
-                    <select id="gameTypeFilter" required>
-                        <option value="">Select Game Type</option>
-                        <option value="sixes">Sixes</option>
-                        <option value="box">Box</option>
-                        <option value="field">Field</option>
-                        <option value="clinic">Clinic</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="eventGender">Gender:</label>
-                    <select id="eventGender" required>
-                        <option value="">Select Gender</option>
-                        <option value="men">Men</option>
-                        <option value="women">Women</option>
-                        <option value="both">Both</option>
-                    </select>
+                    <label for="customEventGender">Gender:</label>
+                    <div id="customEventGender" class="custom-dropdown full-width-input">
+                        <button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="eventGenderOptions">Select Gender</button>
+                        <ul class="dropdown-options" role="listbox" id="eventGenderOptions">
+                            </ul>
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="eventCost">Cost (optional):</label>
                     <div class="cost-details">
-                        <input type="number" id="eventCost" step="0.01" min="0" placeholder="e.g., 25.00">
-                        <select id="eventCurrency">
-                            </select>
-                        <select id="costType">
-                            </select>
+                        <input type="number" id="eventCost" step="0.01" min="0" placeholder="e.g., 25.00" class="full-width-input-inline"> <div id="customEventCurrency" class="custom-dropdown full-width-input-inline">
+                            <button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="eventCurrencyOptions">Select Currency</button>
+                            <ul class="dropdown-options" role="listbox" id="eventCurrencyOptions">
+                                </ul>
+                        </div>
+
+                        <div id="customCostType" class="custom-dropdown full-width-input-inline">
+                            <button class="dropdown-toggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="costTypeOptions">Not Specified</button>
+                            <ul class="dropdown-options" role="listbox" id="costTypeOptions">
+                                </ul>
+                        </div>
                     </div>
                     <small>Leave blank if the event is free.</small>
                 </div>
+
                 <div class="form-group">
                     <label for="eventStartDate">Start Date:</label>
-                    <input type="date" id="eventStartDate" required>
+                    <input type="date" id="eventStartDate" required class="full-width-input">
                 </div>
 
                 <div class="form-group">
                     <label for="eventEndDate">End Date (optional, if multi-day):</label>
-                    <input type="date" id="eventEndDate">
+                    <input type="date" id="eventEndDate" class="full-width-input">
                     <small>Leave blank if it's a single-day event.</small>
                 </div>
 
                 <div class="form-group">
                     <label for="eventDescription">Description:</label>
-                    <textarea id="eventDescription" rows="4" required></textarea>
+                    <textarea id="eventDescription" rows="4" required class="full-width-input"></textarea>
                 </div>
 
                 <div class="form-group">
                     <label for="eventLink">More Info Link (optional):</label>
-                    <input type="url" id="eventLink" placeholder="e.g., https://example.com/event-info">
+                    <input type="url" id="eventLink" placeholder="e.g., https://example.com/event-info" class="full-width-input">
                 </div>
 
                 <div class="form-group">
                     <label for="contactEmail">Contact Email (optional):</label>
-                    <input type="text" id="contactEmail" placeholder="e.g., info@yourevent.com">
+                    <input type="text" id="contactEmail" placeholder="e.g., info@yourevent.com" class="full-width-input">
                 </div>
 
                 <button type="submit" id="addEventButton" class="button">Add Event</button>

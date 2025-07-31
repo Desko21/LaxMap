@@ -19,80 +19,131 @@ document.addEventListener('DOMContentLoaded', () => {
     const longitudeInput = document.getElementById('longitude');
     const submitButton = document.getElementById('addEventButton');
 
-    // Dropdowns for Game Type and Gender
-    const eventTypeInput = document.getElementById('eventType');
-    const eventGenderInput = document.getElementById('eventGender');
+    // !!! CAMBIATO: Riferimenti ai div delle dropdown personalizzate, NON più i select
+    const customEventTypeDropdown = document.getElementById('customEventType'); // Nuovo ID per il div della dropdown Game Type
+    const customEventGenderDropdown = document.getElementById('customEventGender'); // Nuovo ID per il div della dropdown Gender
 
-    // --- REFERENCES FOR COST AND CURRENCY ---
+    // --- REFERENCES FOR COST AND CURRENCY (Nuovi ID per i div delle dropdown) ---
     const eventCostInput = document.getElementById('eventCost');
-    const costTypeSelect = document.getElementById('costType');
-    const eventCurrencySelect = document.getElementById('eventCurrency'); // NEW: Reference for currency dropdown
+    const customCostTypeDropdown = document.getElementById('customCostType'); // Nuovo ID per il div della dropdown Cost Type
+    const customEventCurrencyDropdown = document.getElementById('customEventCurrency'); // Nuovo ID per il div della dropdown Currency
 
 
     // --- Data for Select Options (MUST MATCH edit-event.js and script.js) ---
     const gameTypesOptions = ['Field', 'Box', 'Sixes', 'Clinic', 'Other'];
     const gendersOptions = ['Men', 'Women', 'Both', 'Mixed', 'Other'];
     const costTypeOptions = ['Not Specified', 'Per Person', 'Per Team'];
-    // --- NEW DATA FOR CURRENCY ---
-    // Value: ISO 4217 code, Text: Code - Symbol (Name)
     const currencyOptions = [
-        { value: '', text: 'Select Currency' }, // Placeholder
-        { value: 'usd', text: 'USD ($) - United States Dollar' },
-        { value: 'eur', text: 'EUR (€) - Euro' },
-        { value: 'gbp', text: 'GBP (£) - British Pound' },
-        { value: 'jpy', text: 'JPY (¥) - Japanese Yen' },
-        { value: 'cad', text: 'CAD (C$) - Canadian Dollar' },
-        { value: 'aud', text: 'AUD (A$) - Australian Dollar' },
-        { value: 'chf', text: 'CHF (CHF) - Swiss Franc' },
-        { value: 'cny', text: 'CNY (¥) - Chinese Yuan' },
-        { value: 'inr', text: 'INR (₹) - Indian Rupee' },
-        { value: 'brl', text: 'BRL (R$) - Brazilian Real' }
+        // NOTA: Per le custom dropdown, non abbiamo bisogno del placeholder vuoto come prima opzione
+        // Il testo del bottone fa da placeholder.
+        'USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', 'BRL'
     ];
 
 
-    // --- Function to populate dropdowns ---
-    // Modified to handle both simple string arrays and object arrays for currency
-    function populateDropdown(selectElement, options, placeholderText = "Select an option", isCurrency = false) {
-        selectElement.innerHTML = ''; // Clear existing options
-
-        if (isCurrency) {
-            options.forEach((optionData, index) => {
-                const option = document.createElement('option');
-                option.value = optionData.value;
-                option.textContent = optionData.text;
-                if (index === 0) { // First option is the placeholder
-                    option.disabled = true;
-                    option.selected = true;
-                }
-                selectElement.appendChild(option);
-            });
-        } else {
-            const placeholderOption = document.createElement('option');
-            placeholderOption.value = '';
-            placeholderOption.textContent = placeholderText;
-            if (placeholderText.includes("Select")) {
-                placeholderOption.disabled = true;
-            }
-            placeholderOption.selected = true;
-            selectElement.appendChild(placeholderOption);
-
-            options.forEach(optionText => {
-                const option = document.createElement('option');
-                option.value = optionText.toLowerCase().replace(/\s/g, '');
-                option.textContent = optionText;
-                selectElement.appendChild(option);
-            });
+    /**
+     * Inizializza una dropdown personalizzata.
+     * Questa funzione deve essere inclusa in ogni JS che usa custom-dropdown.
+     * @param {HTMLElement} dropdownElement Il div con classe .custom-dropdown (es. customEventTypeDropdown).
+     * @param {string[]} optionsArray Un array di stringhe per le opzioni (es. gameTypesOptions).
+     * @param {string} initialText Il testo iniziale da mostrare sul bottone (es. "Select Game Type").
+     * @param {string} initialValue Il valore iniziale da selezionare (opzionale, utile per pre-compilare).
+     */
+    function setupCustomDropdown(dropdownElement, optionsArray, initialText = 'Select...', initialValue = '') {
+        // Se dropdownElement è null (es. l'ID non è stato trovato nell'HTML), esci.
+        if (!dropdownElement) {
+            console.error('Dropdown element not found:', dropdownElement);
+            return;
         }
+
+        const toggleButton = dropdownElement.querySelector('.dropdown-toggle');
+        const optionsList = dropdownElement.querySelector('.dropdown-options');
+
+        if (!toggleButton || !optionsList) {
+            console.error('Dropdown internal elements not found for:', dropdownElement);
+            return;
+        }
+
+        // Pulisci le opzioni esistenti
+        optionsList.innerHTML = '';
+
+        // Imposta il testo iniziale del bottone
+        toggleButton.textContent = initialText;
+        toggleButton.setAttribute('data-value', ''); // Nessun valore selezionato inizialmente
+
+        let foundInitialSelection = false;
+
+        // Popola le opzioni
+        optionsArray.forEach(optionText => {
+            const li = document.createElement('li');
+            li.setAttribute('role', 'option');
+            // I valori li useremo sempre in minuscolo e senza spazi per coerenza
+            const dataValue = optionText.toLowerCase().replace(/\s/g, '');
+            li.setAttribute('data-value', dataValue);
+            li.textContent = optionText;
+            optionsList.appendChild(li);
+
+            // Se c'è un valore iniziale, cerca di selezionare l'opzione corrispondente
+            if (initialValue && dataValue === initialValue.toLowerCase().replace(/\s/g, '')) {
+                toggleButton.textContent = optionText; // Aggiorna il testo del bottone
+                li.classList.add('selected'); // Aggiungi classe 'selected'
+                foundInitialSelection = true;
+            }
+
+            li.addEventListener('click', () => {
+                // Imposta il testo del bottone con il testo dell'opzione cliccata
+                toggleButton.textContent = optionText;
+                toggleButton.setAttribute('data-value', dataValue); // Imposta il data-value sul bottone
+                dropdownElement.classList.remove('open');
+                // Rimuovi 'selected' da tutti e aggiungi all'elemento corrente
+                optionsList.querySelectorAll('li').forEach(item => item.classList.remove('selected'));
+                li.classList.add('selected');
+                // Aggiorna l'attributo aria-expanded
+                toggleButton.setAttribute('aria-expanded', 'false');
+
+                // Dispatch un evento 'change' personalizzato per simulare il comportamento di select
+                const event = new Event('change', { bubbles: true });
+                dropdownElement.dispatchEvent(event);
+            });
+        });
+
+        // Se nessun valore iniziale è stato trovato, ma c'è un initialText, imposta quello
+        if (!foundInitialSelection && initialText !== 'Select...') {
+            toggleButton.textContent = initialText;
+        }
+
+        // Toggle della dropdown al click sul bottone
+        toggleButton.addEventListener('click', () => {
+            const isOpen = dropdownElement.classList.toggle('open');
+            toggleButton.setAttribute('aria-expanded', isOpen);
+        });
+
+        // Chiudi la dropdown se si clicca fuori
+        document.addEventListener('click', (event) => {
+            if (!dropdownElement.contains(event.target) && dropdownElement.classList.contains('open')) {
+                dropdownElement.classList.remove('open');
+                toggleButton.setAttribute('aria-expanded', 'false');
+            }
+        });
     }
 
-    // Populate dropdowns on page load with specific placeholder texts
-    populateDropdown(eventTypeInput, gameTypesOptions, "Select Game Type");
-    populateDropdown(eventGenderInput, gendersOptions, "Select Gender");
-    populateDropdown(costTypeSelect, costTypeOptions, "Not Specified");
-    populateDropdown(eventCurrencySelect, currencyOptions, null, true); // NEW: Populate currency dropdown
+    // !!! CORREZIONE: Inizializza tutte le custom dropdown
+    // Rimosse le chiamate a populateDropdown che causavano l'errore
+    setupCustomDropdown(customEventTypeDropdown, gameTypesOptions, "Select Game Type");
+    setupCustomDropdown(customEventGenderDropdown, gendersOptions, "Select Gender");
+    setupCustomDropdown(customCostTypeDropdown, costTypeOptions, "Not Specified");
+    setupCustomDropdown(customEventCurrencyDropdown, currencyOptions, "Select Currency");
 
 
     // --- Utility Functions ---
+
+    // Funzione di supporto per ottenere il valore da una custom dropdown
+    // Questa funzione sarà usata al momento del submit del form
+    const getCustomDropdownValue = (dropdownElement) => {
+        const selectedLi = dropdownElement.querySelector('.dropdown-options li.selected');
+        // Ritorna il data-value dell'elemento selezionato, altrimenti una stringa vuota
+        return selectedLi ? selectedLi.dataset.value : '';
+    };
+
     async function logActivity(action, eventDetails) {
         const timestamp = new Date().toISOString();
         let userIp = 'N/A';
@@ -251,14 +302,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const eventEndDate = document.getElementById('eventEndDate').value;
             const eventDescription = document.getElementById('eventDescription').value;
             const eventLink = document.getElementById('eventLink').value;
-            const eventType = eventTypeInput.value;
-            const eventGender = eventGenderInput.value;
             const contactEmail = document.getElementById('contactEmail').value;
 
-            const eventCost = eventCostInput.value === '' ? null : parseFloat(eventCostInput.value);
-            const costType = costTypeSelect.value === '' ? 'not_specified' : costTypeSelect.value;
-            const eventCurrency = eventCurrencySelect.value === '' ? null : eventCurrencySelect.value; // NEW: Get currency value
+            // !!! CAMBIATO: Ottieni i valori dalle custom dropdown usando getCustomDropdownValue
+            const eventType = getCustomDropdownValue(customEventTypeDropdown);
+            const eventGender = getCustomDropdownValue(customEventGenderDropdown);
+            const costType = getCustomDropdownValue(customCostTypeDropdown);
+            const eventCurrency = getCustomDropdownValue(customEventCurrencyDropdown);
 
+            const eventCost = eventCostInput.value === '' ? null : parseFloat(eventCostInput.value);
 
             let latitude = parseFloat(latitudeInput.value);
             let longitude = parseFloat(longitudeInput.value);
@@ -282,10 +334,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 contactEmail: contactEmail === '' ? null : contactEmail,
                 cost: eventCost,
                 costType: costType,
-                currency: eventCurrency // NEW: Add currency to event object
+                currency: eventCurrency
             };
 
             // Basic validation for dropdowns (since they are required)
+            // I valori vuoti dalle custom dropdown saranno stringhe vuote, non null
             if (eventType === '' || eventGender === '') {
                 messageDiv.textContent = 'Please select a Game Type and a Gender.';
                 messageDiv.className = 'message error';
@@ -295,14 +348,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             // --- Validation for cost, cost type, and currency ---
             if (eventCost !== null) { // If a cost is entered...
-                if (costType === 'not_specified') {
+                if (costType === 'not_specified' || costType === '') { // '' for default if not 'not_specified'
                     messageDiv.textContent = 'Please specify the Cost Type (e.g., Per Person, Per Team) if you enter a cost.';
                     messageDiv.className = 'message error';
                     submitButton.disabled = false;
                     submitButton.textContent = 'Add Event';
                     return;
                 }
-                if (eventCurrency === null) { // ... and currency is not selected
+                if (eventCurrency === '') { // ... and currency is not selected (empty string from custom dropdown)
                     messageDiv.textContent = 'Please select a Currency if you enter a cost.';
                     messageDiv.className = 'message error';
                     submitButton.disabled = false;
@@ -310,14 +363,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
             } else { // If no cost is entered
-                if (costType !== 'not_specified' && costType !== '') { // "" is the default for "Not Specified"
+                // Se costType non è 'not_specified' (o '') e non c'è costo
+                if (costType !== 'not_specified' && costType !== '') {
                     messageDiv.textContent = 'You have selected a Cost Type but not entered a Cost. Please enter a cost or set Cost Type to "Not Specified".';
                     messageDiv.className = 'message error';
                     submitButton.disabled = false;
                     submitButton.textContent = 'Add Event';
                     return;
                 }
-                if (eventCurrency !== null && eventCurrency !== '') {
+                // Se currency non è vuoto (selezionata) e non c'è costo
+                if (eventCurrency !== '') {
                     messageDiv.textContent = 'You have selected a Currency but not entered a Cost. Please enter a cost or set Currency to "Select Currency".';
                     messageDiv.className = 'message error';
                     submitButton.disabled = false;
@@ -364,11 +419,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             addEventForm.reset();
-            // After reset, re-populate dropdowns to show placeholder
-            populateDropdown(eventTypeInput, gameTypesOptions, "Select Game Type");
-            populateDropdown(eventGenderInput, gendersOptions, "Select Gender");
-            populateDropdown(costTypeSelect, costTypeOptions, "Not Specified");
-            populateDropdown(eventCurrencySelect, currencyOptions, null, true); // NEW: Reset currency dropdown
+            // !!! CORREZIONE: Dopo il reset, ri-inizializza le custom dropdown per mostrare il placeholder
+            setupCustomDropdown(customEventTypeDropdown, gameTypesOptions, "Select Game Type");
+            setupCustomDropdown(customEventGenderDropdown, gendersOptions, "Select Gender");
+            setupCustomDropdown(customCostTypeDropdown, costTypeOptions, "Not Specified");
+            setupCustomDropdown(customEventCurrencyDropdown, currencyOptions, "Select Currency");
 
             geolocationMessageDiv.textContent = '';
             latitudeInput.value = '';
