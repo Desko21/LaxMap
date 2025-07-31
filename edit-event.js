@@ -22,48 +22,193 @@ document.addEventListener('DOMContentLoaded', async () => {
     const editLatitudeInput = document.getElementById('editLatitude');
     const editLongitudeInput = document.getElementById('editLongitude');
     const geolocationMessageDiv = document.getElementById('geolocationMessage');
-    const editEventTypeSelect = document.getElementById('editEventType');
-    const editEventGenderSelect = document.getElementById('editEventGender');
+    // Rimuovi i riferimenti ai vecchi select element
+    // const editEventTypeSelect = document.getElementById('editEventType');
+    // const editEventGenderSelect = document.getElementById('editEventGender');
+    // const currencyTypeSelect = document.getElementById('currencyType');
+    // const costTypeSelect = document.getElementById('costType');
+
     const editEventStartDateInput = document.getElementById('editEventStartDate');
     const editEventEndDateInput = document.getElementById('editEventEndDate');
     const editEventDescriptionTextarea = document.getElementById('editEventDescription');
     const editEventLinkInput = document.getElementById('editEventLink');
     const editContactEmailInput = document.getElementById('editContactEmail');
-    const editEventCostInput = document.getElementById('editEventCost');
-    const currencyTypeSelect = document.getElementById('currencyType');
-    const costTypeSelect = document.getElementById('costType');
+    const editEventCostInput = document.getElementById('editEventCost'); // Questo è un input normale
 
     // NUOVO: Bottone per eliminare l'evento
     const deleteEventButton = document.getElementById('deleteEventButton');
 
-    const gameTypes = ['Field', 'Box', 'Sixes', 'Clinic', 'Other'];
-    const genders = ['Men', 'Women', 'Both', 'Mixed', 'Other'];
-    const currencies = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', 'BRL'];
-    const costTypes = ['Not Specified', 'Per Person', 'Per Team'];
+    // Dati per le dropdown
+    const gameTypes = [
+        { value: 'field', label: 'Field' },
+        { value: 'box', label: 'Box' },
+        { value: 'sixes', label: 'Sixes' },
+        { value: 'clinic', label: 'Clinic' },
+        { value: 'other', label: 'Other' }
+    ];
+    const genders = [
+        { value: 'men', label: 'Men' },
+        { value: 'women', label: 'Women' },
+        { value: 'both', label: 'Both' },
+        { value: 'mixed', label: 'Mixed' },
+        { value: 'other', label: 'Other' }
+    ];
+    const currencies = [
+        { value: 'usd', label: 'USD' },
+        { value: 'eur', label: 'EUR' },
+        { value: 'gbp', label: 'GBP' },
+        { value: 'jpy', label: 'JPY' },
+        { value: 'cad', label: 'CAD' },
+        { value: 'aud', label: 'AUD' },
+        { value: 'chf', label: 'CHF' },
+        { value: 'cny', label: 'CNY' },
+        { value: 'inr', label: 'INR' },
+        { value: 'brl', label: 'BRL' }
+    ];
+    const costTypes = [
+        { value: 'not-specified', label: 'Not Specified' },
+        { value: 'per-person', label: 'Per Person' },
+        { value: 'per-team', label: 'Per Team' }
+    ];
 
+    // Variabili per memorizzare i valori selezionati dalle custom dropdown
+    let selectedGameType = '';
+    let selectedGender = '';
+    let selectedCurrency = '';
+    let selectedCostType = '';
 
- function populateDropdown(selectElement, options, selectedValue = '') {
-    selectElement.innerHTML = '';
-    // Assicurati che selectedValue sia una stringa, anche se è null o undefined
-    const normalizedSelectedValue = (selectedValue || '').toLowerCase().replace(/\s/g, '');
-
-    options.forEach(optionText => {
-        const option = document.createElement('option');
-        option.value = optionText.toLowerCase().replace(/\s/g, '');
-        option.textContent = optionText;
-        
-        // Confronta con il valore normalizzato
-        if (option.value === normalizedSelectedValue) {
-            option.selected = true;
+    // Funzione per inizializzare una dropdown personalizzata (DA INSERIRE QUI)
+    function initializeCustomDropdown(dropdownElementId, optionsArray, placeholderText = "Select", selectCallback, initialValue = null) {
+        const dropdown = document.getElementById(dropdownElementId);
+        if (!dropdown) {
+            console.warn(`Dropdown element with ID '${dropdownElementId}' not found. Ensure HTML element exists and ID is correct.`);
+            return;
         }
-        selectElement.appendChild(option);
-    });
-}
 
-    populateDropdown(editEventTypeSelect, gameTypes);
-    populateDropdown(editEventGenderSelect, genders);
-    populateDropdown(currencyTypeSelect, currencies);
-    populateDropdown(costTypeSelect, costTypes);
+        const toggleButton = dropdown.querySelector('.dropdown-toggle');
+        const optionsList = dropdown.querySelector('.dropdown-options');
+
+        if (!toggleButton || !optionsList) {
+            console.error(`Missing .dropdown-toggle or .dropdown-options in dropdown with ID '${dropdownElementId}'. Check HTML structure.`);
+            return;
+        }
+
+        toggleButton.textContent = placeholderText;
+        optionsList.innerHTML = ''; // Pulisci le opzioni esistenti
+
+        optionsArray.forEach(option => {
+            const li = document.createElement('li');
+            li.textContent = option.label;
+            li.setAttribute('data-value', option.value);
+            li.setAttribute('role', 'option');
+            li.setAttribute('tabindex', '0');
+            optionsList.appendChild(li);
+
+            li.addEventListener('click', (event) => {
+                selectOption(option.value, option.label);
+                closeDropdown();
+                event.stopPropagation();
+                toggleButton.focus();
+            });
+
+            li.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    selectOption(option.value, option.label);
+                    closeDropdown();
+                    toggleButton.focus();
+                    e.preventDefault();
+                } else if (e.key === 'ArrowDown') {
+                    const nextLi = li.nextElementSibling;
+                    if (nextLi) nextLi.focus();
+                    e.preventDefault();
+                } else if (e.key === 'ArrowUp') {
+                    const prevLi = li.previousElementSibling;
+                    if (prevLi) prevLi.focus();
+                    e.preventDefault();
+                }
+            });
+        });
+
+        const selectOption = (value, label) => {
+            toggleButton.textContent = label;
+            optionsList.querySelectorAll('li').forEach(li => li.classList.remove('selected'));
+            const selectedLi = optionsList.querySelector(`li[data-value="${value}"]`);
+            if (selectedLi) selectedLi.classList.add('selected');
+
+            selectCallback(value); // Chiama la callback con il valore selezionato
+        };
+
+        const toggleDropdown = (event) => {
+            dropdown.classList.toggle('open');
+            toggleButton.setAttribute('aria-expanded', dropdown.classList.contains('open'));
+            if (dropdown.classList.contains('open')) {
+                const firstOption = optionsList.querySelector('li[role="option"]');
+                if (firstOption) firstOption.focus();
+            } else {
+                toggleButton.focus();
+            }
+            event.preventDefault(); // IMPORTANTE: impedisce il default del click che potrebbe causare lo scroll
+            event.stopPropagation();
+        };
+
+        const closeDropdown = () => {
+            dropdown.classList.remove('open');
+            toggleButton.setAttribute('aria-expanded', 'false');
+        };
+
+        toggleButton.addEventListener('click', toggleDropdown);
+
+        toggleButton.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                toggleDropdown(e);
+            } else if (e.key === 'ArrowDown' && !dropdown.classList.contains('open')) {
+                toggleDropdown(e);
+            } else if (e.key === 'ArrowUp' && dropdown.classList.contains('open')) {
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!dropdown.contains(event.target)) {
+                closeDropdown();
+            }
+        });
+
+        // Imposta il valore iniziale se fornito
+        if (initialValue) {
+            const normalizedInitialValue = initialValue.toLowerCase().replace(/\s/g, '');
+            const initialOption = optionsArray.find(opt => opt.value === normalizedInitialValue);
+            if (initialOption) {
+                selectOption(initialOption.value, initialOption.label);
+            } else {
+                // Se il valore iniziale non corrisponde a nessuna opzione,
+                // imposta il placeholder e resetta la variabile selezionata
+                selectCallback(''); // O un valore predefinito per indicare "nessuna selezione"
+                toggleButton.textContent = placeholderText;
+            }
+        }
+    }
+
+    // NON USARE PIÙ QUESTA FUNZIONE O LE SUE CHIAMATE ALL'INIZIO DEL DOC
+    // function populateDropdown(selectElement, options, selectedValue = '') {
+    //     selectElement.innerHTML = '';
+    //     const normalizedSelectedValue = (selectedValue || '').toLowerCase().replace(/\s/g, '');
+    //     options.forEach(optionText => {
+    //         const option = document.createElement('option');
+    //         option.value = optionText.toLowerCase().replace(/\s/g, '');
+    //         option.textContent = optionText;
+    //         if (option.value === normalizedSelectedValue) {
+    //             option.selected = true;
+    //         }
+    //         selectElement.appendChild(option);
+    //     });
+    // }
+
+    // Rimuovi queste chiamate iniziali a populateDropdown (sono state la causa dell'errore)
+    // populateDropdown(editEventTypeSelect, gameTypes);
+    // populateDropdown(editEventGenderSelect, genders);
+    // populateDropdown(currencyTypeSelect, currencies);
+    // populateDropdown(costTypeSelect, costTypes);
 
 
     // Funzione per mostrare messaggi
@@ -81,6 +226,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         messageDiv.className = 'message';
         geolocationMessageDiv.textContent = '';
         geolocationMessageDiv.className = 'message';
+
+        // Resetta i valori delle custom dropdown al placeholder
+        initializeCustomDropdown('customEventType', gameTypes, 'Select Game Type', value => selectedGameType = value);
+        initializeCustomDropdown('customEventGender', genders, 'Select Gender', value => selectedGender = value);
+        initializeCustomDropdown('customEventCurrency', currencies, 'Select Currency', value => selectedCurrency = value);
+        initializeCustomDropdown('customCostType', costTypes, 'Not Specified', value => selectedCostType = value);
     }
 
 
@@ -116,16 +267,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 editEventLocationInput.value = event.location || '';
                 editLatitudeInput.value = event.latitude || '';
                 editLongitudeInput.value = event.longitude || '';
-                populateDropdown(editEventTypeSelect, gameTypes, event.type);
-                populateDropdown(editEventGenderSelect, genders, event.gender);
+
+                // Utilizza initializeCustomDropdown per popolare e impostare il valore
+                // Il valore iniziale viene passato come ultimo parametro
+                initializeCustomDropdown('customEventType', gameTypes, 'Select Game Type', value => selectedGameType = value, event.type);
+                initializeCustomDropdown('customEventGender', genders, 'Select Gender', value => selectedGender = value, event.gender);
+                initializeCustomDropdown('customEventCurrency', currencies, 'Select Currency', value => selectedCurrency = value, event.cost?.currency);
+                initializeCustomDropdown('customCostType', costTypes, 'Not Specified', value => selectedCostType = value, event.cost?.type);
+
+
                 editEventStartDateInput.value = event.startDate || '';
                 editEventEndDateInput.value = event.endDate || '';
                 editEventDescriptionTextarea.value = event.description || '';
                 editEventLinkInput.value = event.link || '';
                 editContactEmailInput.value = event.contactEmail || '';
-                editEventCostInput.value = event.cost !== undefined ? event.cost : '';
-                populateDropdown(currencyTypeSelect, currencies, event.currency);
-                populateDropdown(costTypeSelect, costTypes, event.costType);
+                editEventCostInput.value = event.cost !== undefined && event.cost !== null ? event.cost : '';
+
 
                 eventEditFormContainer.style.display = 'block';
                 showMessage('Event found. You can now edit its details.', 'success');
@@ -192,17 +349,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             location: editEventLocationInput.value.trim(),
             latitude: parseFloat(editLatitudeInput.value),
             longitude: parseFloat(editLongitudeInput.value),
-            type: editEventTypeSelect.value,
-            gender: editEventGenderSelect.value,
+            // Usa le variabili globali aggiornate dalle custom dropdown
+            type: selectedGameType,
+            gender: selectedGender,
             startDate: editEventStartDateInput.value,
-            endDate: editEventEndDateInput.value || null, // Se vuota, salva come null
+            endDate: editEventEndDateInput.value || null,
             description: editEventDescriptionTextarea.value.trim(),
             link: editEventLinkInput.value.trim() || null,
             contactEmail: editContactEmailInput.value.trim() || null,
             cost: editEventCostInput.value ? parseFloat(editEventCostInput.value) : null,
-            currency: currencyTypeSelect.value,
-            costType: costTypeSelect.value,
-            // Aggiungi qui eventuali altri campi che potresti avere, es. featured: event.featured
+            // Usa le variabili globali aggiornate dalle custom dropdown
+            currency: selectedCurrency,
+            costType: selectedCostType,
         };
 
         // Recupera tutti gli eventi, aggiorna quello specifico e riscrivi l'intero bin
@@ -220,7 +378,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Mantieni eventuali proprietà esistenti non modificate dal form (es. featured)
                 allEvents[eventIndex] = { ...allEvents[eventIndex], ...updatedEvent };
             } else {
-                // Questo caso non dovrebbe accadere se l'evento è stato trovato con successo
                 throw new Error("Event not found in current bin data during update.");
             }
 
@@ -239,7 +396,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             showMessage('Event updated successfully!', 'success');
-            // Puoi scegliere di mantenere il form aperto o resettarlo
             // resetForm(); // Se preferisci resettare dopo il salvataggio
         } catch (error) {
             console.error('Error updating event:', error);
@@ -266,7 +422,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         showMessage('Deleting event...', 'info');
 
         try {
-            // 1. Leggi tutti gli eventi
             const response = await fetch(JSONBIN_EVENTS_READ_URL, {
                 headers: {
                     'X-Master-Key': JSONBIN_MASTER_KEY
@@ -280,15 +435,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = await response.json();
             let allEvents = Array.isArray(data.record) ? data.record : [];
 
-            // 2. Filtra per rimuovere l'evento desiderato
             const updatedEvents = allEvents.filter(event => event.id !== eventIdToDelete);
 
             if (updatedEvents.length === allEvents.length) {
-                // Se la lunghezza è la stessa, significa che l'ID non è stato trovato
                 throw new Error("Event not found in the database. Could not delete.");
             }
 
-            // 3. Scrivi il bin aggiornato (senza l'evento eliminato)
             const updateResponse = await fetch(JSONBIN_EVENTS_WRITE_URL, {
                 method: 'PUT',
                 headers: {
@@ -304,11 +456,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             showMessage('Event deleted successfully!', 'success');
-            resetForm(); // Resetta il form e nascondi dopo l'eliminazione
-            searchEventIdInput.value = ''; // Pulisci anche il campo di ricerca ID
+            resetForm();
+            searchEventIdInput.value = '';
         } catch (error) {
             console.error('Error deleting event:', error);
             showMessage(`Error deleting event: ${error.message}`, 'error');
         }
     });
-});
+
+    // Inizializza le custom dropdown all'avvio (con placeholder)
+    // Non le popoliamo con valori da eventData qui perché eventData è disponibile solo dopo la ricerca
+    // Le inizializziamo con i loro placeholder iniziali.
+    initializeCustomDropdown('customEventType', gameTypes, 'Select Game Type', value => selectedGameType = value);
+    initializeCustomDropdown('customEventGender', genders, 'Select Gender', value => selectedGender = value);
+    initializeCustomDropdown('customEventCurrency', currencies, 'Select Currency', value => selectedCurrency = value);
+    initializeCustomDropdown('customCostType', costTypes, 'Not Specified', value => selectedCostType = value);
+
+}); // Fine DOMContentLoaded
