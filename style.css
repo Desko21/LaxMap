@@ -870,9 +870,11 @@ form input[type="image"] {
 /* Custom Dropdown Styling */
 .custom-dropdown {
     position: relative;
-    display: inline-block; /* O block, a seconda del layout desiderato */
+    display: block; /* CAMBIATO QUI: da inline-block a block */
     width: 100%; /* Occupa l'intera larghezza disponibile */
     font-family: Arial, sans-serif; /* Assicurati che il font sia consistente */
+    /* Aggiungo un po' di margine per separare le dropdown nel form, se non lo hai già con form label */
+    margin-bottom: 15px; 
 }
 
 .custom-dropdown .dropdown-toggle {
@@ -937,27 +939,43 @@ form input[type="image"] {
     background-color: #f0f0f0; /* Colore al passaggio del mouse o selezionato */
 }
 
-/* Stile per input che devono stare affiancati */
+/* Lascia invariate le regole per .full-width-input-inline */
 .full-width-input-inline {
     width: calc(33.33% - 10px); /* Regola la larghezza per stare su 3 colonne con un po' di spazio */
     box-sizing: border-box;
     display: inline-block; /* Importante per stare sulla stessa riga */
     margin-right: 10px; /* Spazio tra gli elementi */
     vertical-align: top; /* Per allineare se hanno altezze diverse */
+    margin-bottom: 0; /* Rimuovi il margine inferiore se il blocco padre lo gestisce */
 }
 
-/* Regola per l'ultimo elemento o per un layout diverso se necessario */
-.cost-details .custom-dropdown.full-width-input-inline:last-child,
-.cost-details input.full-width-input-inline:last-child {
-    margin-right: 0;
+/* Assicurati che il cost-details container sia un flexbox o simile per gestire gli inline-block */
+.cost-details {
+    display: flex;
+    flex-wrap: wrap; /* Permette agli elementi di andare a capo */
+    gap: 15px; /* Spazio tra gli elementi */
+    align-items: flex-start; /* Allinea gli elementi in alto */
 }
 
-/* Media query per full-width-input-inline su schermi piccoli, se necessario */
+/* Modifica specifica per le dropdown all'interno di cost-details per gestirle come inline-block */
+.cost-details .custom-dropdown {
+    display: inline-block; /* Riabilita inline-block solo dove necessario per il layout a colonne */
+    width: calc(33.33% - 10px); /* Larghezza per 3 colonne */
+    margin-bottom: 0; /* Il gap del flexbox gestirà lo spazio */
+}
+
+
+/* Media query per full-width-input-inline su schermi piccoli, applicato anche alle dropdown */
 @media (max-width: 768px) {
-    .full-width-input-inline {
+    .full-width-input-inline,
+    .cost-details .custom-dropdown { /* Applica la regola anche alle custom dropdown qui */
         width: 100%; /* Su mobile, tornano a larghezza piena */
         display: block;
         margin-right: 0;
         margin-bottom: 10px; /* Spazio tra gli elementi verticali */
+    }
+    .cost-details {
+        flex-direction: column; /* Impila gli elementi verticalmente su mobile */
+        gap: 0; /* Rimuovi il gap del flexbox quando sono impilati */
     }
 }
