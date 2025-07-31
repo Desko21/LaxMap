@@ -147,8 +147,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else {
                 toggleButton.focus();
             }
-            event.preventDefault(); // IMPORTANTE: impedisce il default del click che potrebbe causare lo scroll
-            event.stopPropagation();
+            // event.preventDefault(); // IMPORTANTE: impedisce il default del click che potrebbe causare lo scroll
+            // event.stopPropagation();
         };
 
         const closeDropdown = () => {
