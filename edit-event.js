@@ -199,7 +199,7 @@ function populateForm(event) {
 async function updateEvent(eventData) {
     showMessage('Saving changes...', 'info');
     try {
-        const response = await fetch(JSONBIN_EVENTS_UPDATE_URL, {
+        const response = await fetch(JSONBIN_EVENTS_WRITE_URL, {
             method: 'PUT', // Usa PUT per aggiornare l'intero bin
             headers: {
                 'Content-Type': 'application/json',
