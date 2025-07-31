@@ -870,10 +870,9 @@ form input[type="image"] {
 /* Custom Dropdown Styling */
 .custom-dropdown {
     position: relative;
-    /* display: block; Rimuovi o rendilo più specifico se alcune devono essere inline-block */
-    /* width: 100%; Rimuovi questa riga qui */
+    /* La display/width sarà definita dal contesto (es. cost-details .custom-dropdown o dal form principale) */
     font-family: Arial, sans-serif;
-    margin-bottom: 15px; /* Giusto per separare i blocchi */
+    margin-bottom: 15px; /* Spazio sotto ogni dropdown se non in un flex container con gap */
 }
 
 .custom-dropdown .dropdown-toggle {
@@ -883,7 +882,7 @@ form input[type="image"] {
     border: 1px solid #ccc;
     border-radius: 4px;
     cursor: pointer;
-    width: 100%; /* Lascia width: 100% qui, così il bottone occupa tutto lo spazio disponibile del suo contenitore */
+    width: 100%; /* Il toggle button occupa sempre il 100% della larghezza del suo genitore .custom-dropdown */
     text-align: left;
     display: flex;
     justify-content: space-between;
@@ -895,7 +894,16 @@ form input[type="image"] {
     font-size: 1em;
 }
 
-/* ... il resto del CSS per .dropdown-toggle e ::after ... */
+.custom-dropdown .dropdown-toggle::after {
+    content: '\25BC'; /* Freccia giù */
+    font-size: 0.8em;
+    margin-left: 10px;
+    transition: transform 0.3s ease;
+}
+
+.custom-dropdown.open .dropdown-toggle::after {
+    transform: rotate(180deg); /* Freccia su quando aperto */
+}
 
 .custom-dropdown .dropdown-options {
     list-style: none;
@@ -906,21 +914,30 @@ form input[type="image"] {
     border: 1px solid #ccc;
     border-top: none;
     border-radius: 0 0 4px 4px;
-    width: 100%; /* Questo 100% si riferisce alla larghezza del .custom-dropdown genitore */
-    max-height: 200px;
+    width: 100%; /* La lista delle opzioni occupa il 100% della larghezza del suo genitore .custom-dropdown */
+    max-height: 200px; /* Limita l'altezza e aggiunge scroll */
     overflow-y: auto;
-    z-index: 1000;
+    z-index: 1000; /* Assicurati che sia sopra altri elementi */
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    display: none;
-    left: 0; /* Assicurati che parta dall'inizio del genitore */
-    top: 100%; /* Assicurati che si apra proprio sotto il toggle button */
+    display: none; /* Nascosto di default */
+    left: 0; /* Assicurati che sia allineato con il genitore */
+    top: 100%; /* Si apre esattamente sotto il toggle button */
 }
 
 .custom-dropdown.open .dropdown-options {
-    display: block;
+    display: block; /* Mostrato quando la dropdown è aperta */
 }
 
-/* ... il resto del CSS per le opzioni e li ... */
+.custom-dropdown .dropdown-options li {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.custom-dropdown .dropdown-options li:hover,
+.custom-dropdown .dropdown-options li.selected {
+    background-color: #f0f0f0; /* Colore al passaggio del mouse o selezionato */
+}
 
 /* Le regole per full-width-input-inline e cost-details rimangono invariate */
 .full-width-input-inline {
@@ -939,6 +956,7 @@ form input[type="image"] {
     align-items: flex-start;
 }
 
+/* Modifica specifica per le dropdown all'interno di cost-details per gestirle come inline-block */
 .cost-details .custom-dropdown {
     display: inline-block; /* Questo è fondamentale per il layout a 3 colonne */
     width: calc(33.33% - 10px);
@@ -946,62 +964,6 @@ form input[type="image"] {
 }
 
 /* E la media query per il mobile è corretta */
-@media (max-width: 768px) {
-    .full-width-input-inline,
-    .cost-details .custom-dropdown {
-        width: 100%;
-        display: block;
-        margin-right: 0;
-        margin-bottom: 10px;
-    }
-    .cost-details {
-        flex-direction: column;
-        gap: 0;
-    }
-}
-
-.custom-dropdown.open .dropdown-options {
-    display: block; /* Mostrato quando la dropdown è aperta */
-}
-
-.custom-dropdown .dropdown-options li {
-    padding: 10px 15px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.custom-dropdown .dropdown-options li:hover,
-.custom-dropdown .dropdown-options li.selected {
-    background-color: #f0f0f0; /* Colore al passaggio del mouse o selezionato */
-}
-
-/* Lascia invariate le regole per .full-width-input-inline */
-.full-width-input-inline {
-    width: calc(33.33% - 10px); /* Regola la larghezza per stare su 3 colonne con un po' di spazio */
-    box-sizing: border-box;
-    display: inline-block; /* Importante per stare sulla stessa riga */
-    margin-right: 10px; /* Spazio tra gli elementi */
-    vertical-align: top; /* Per allineare se hanno altezze diverse */
-    margin-bottom: 0; /* Rimuovi il margine inferiore se il blocco padre lo gestisce */
-}
-
-/* Assicurati che il cost-details container sia un flexbox o simile per gestire gli inline-block */
-.cost-details {
-    display: flex;
-    flex-wrap: wrap; /* Permette agli elementi di andare a capo */
-    gap: 15px; /* Spazio tra gli elementi */
-    align-items: flex-start; /* Allinea gli elementi in alto */
-}
-
-/* Modifica specifica per le dropdown all'interno di cost-details per gestirle come inline-block */
-.cost-details .custom-dropdown {
-    display: inline-block; /* Riabilita inline-block solo dove necessario per il layout a colonne */
-    width: calc(33.33% - 10px); /* Larghezza per 3 colonne */
-    margin-bottom: 0; /* Il gap del flexbox gestirà lo spazio */
-}
-
-
-/* Media query per full-width-input-inline su schermi piccoli, applicato anche alle dropdown */
 @media (max-width: 768px) {
     .full-width-input-inline,
     .cost-details .custom-dropdown { /* Applica la regola anche alle custom dropdown qui */

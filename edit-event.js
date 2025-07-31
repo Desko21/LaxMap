@@ -1,10 +1,9 @@
-// edit-event.js
 import {
     JSONBIN_MASTER_KEY,
     JSONBIN_EVENTS_READ_URL,
-    JSONBIN_EVENTS_WRITE_URL, // Assicurati di avere questa costante in config.js
+    JSONBIN_EVENTS_WRITE_URL,
     NOMINATIM_USER_AGENT
-} from './config.js';
+} from './config.js'; // Assicurati che config.js sia nel percorso corretto
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('edit-event.js loaded.');
@@ -22,18 +21,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const editLatitudeInput = document.getElementById('editLatitude');
     const editLongitudeInput = document.getElementById('editLongitude');
     const geolocationMessageDiv = document.getElementById('geolocationMessage');
-    // Rimuovi i riferimenti ai vecchi select element
-    // const editEventTypeSelect = document.getElementById('editEventType');
-    // const editEventGenderSelect = document.getElementById('editEventGender');
-    // const currencyTypeSelect = document.getElementById('currencyType');
-    // const costTypeSelect = document.getElementById('costType');
 
     const editEventStartDateInput = document.getElementById('editEventStartDate');
     const editEventEndDateInput = document.getElementById('editEventEndDate');
     const editEventDescriptionTextarea = document.getElementById('editEventDescription');
     const editEventLinkInput = document.getElementById('editEventLink');
     const editContactEmailInput = document.getElementById('editContactEmail');
-    const editEventCostInput = document.getElementById('editEventCost'); // Questo è un input normale
+    const editEventCostInput = document.getElementById('editEventCost');
 
     // NUOVO: Bottone per eliminare l'evento
     const deleteEventButton = document.getElementById('deleteEventButton');
@@ -72,13 +66,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     ];
 
     // Variabili per memorizzare i valori selezionati dalle custom dropdown
+    // Inizializzale con un valore di default o vuoto
     let selectedGameType = '';
     let selectedGender = '';
     let selectedCurrency = '';
     let selectedCostType = '';
 
-    // Funzione per inizializzare una dropdown personalizzata (DA INSERIRE QUI)
-    function initializeCustomDropdown(dropdownElementId, optionsArray, placeholderText = "Select", selectCallback, initialValue = null) {
+    // --- FUNZIONE PER INIZIALIZZARE LE CUSTOM DROPDOWN ---
+    function initializeCustomDropdown(dropdownElementId, optionsArray, placeholderText = "Select", initialValue = null) {
         const dropdown = document.getElementById(dropdownElementId);
         if (!dropdown) {
             console.warn(`Dropdown element with ID '${dropdownElementId}' not found. Ensure HTML element exists and ID is correct.`);
@@ -93,28 +88,50 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        toggleButton.textContent = placeholderText;
         optionsList.innerHTML = ''; // Pulisci le opzioni esistenti
 
+        // Funzione interna per selezionare un'opzione
+        const selectOption = (value) => {
+            // Aggiorna il testo del pulsante
+            const selectedOption = optionsArray.find(opt => opt.value === value);
+            toggleButton.textContent = selectedOption ? selectedOption.label : placeholderText;
+
+            // Rimuovi la classe 'selected' da tutte le opzioni e aggiungila a quella corrente
+            optionsList.querySelectorAll('li').forEach(li => li.classList.remove('selected'));
+            const selectedLi = optionsList.querySelector(`li[data-value="${value}"]`);
+            if (selectedLi) {
+                selectedLi.classList.add('selected');
+            }
+
+            // Imposta il valore nella variabile esterna corrispondente
+            if (dropdownElementId === 'customEventType') selectedGameType = value;
+            else if (dropdownElementId === 'customGenderType') selectedGender = value;
+            else if (dropdownElementId === 'customCurrencyType') selectedCurrency = value;
+            else if (dropdownElementId === 'customCostType') selectedCostType = value;
+
+            console.log(`Dropdown '${dropdownElementId}' selected: ${value}`);
+        };
+
+        // Popola la lista delle opzioni
         optionsArray.forEach(option => {
             const li = document.createElement('li');
             li.textContent = option.label;
             li.setAttribute('data-value', option.value);
             li.setAttribute('role', 'option');
-            li.setAttribute('tabindex', '0');
+            li.setAttribute('tabindex', '0'); // Rendi l'elemento focusabile per l'accessibilità
             optionsList.appendChild(li);
 
             li.addEventListener('click', (event) => {
-                selectOption(option.value, option.label);
-                closeDropdown();
-                event.stopPropagation();
-                toggleButton.focus();
+                selectOption(option.value);
+                closeDropdown(dropdown); // Chiudi solo QUESTA dropdown
+                event.stopPropagation(); // Evita che il click si propaghi e chiuda altre dropdown
+                toggleButton.focus(); // Riporta il focus sul pulsante dopo la selezione
             });
 
             li.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
-                    selectOption(option.value, option.label);
-                    closeDropdown();
+                    selectOption(option.value);
+                    closeDropdown(dropdown);
                     toggleButton.focus();
                     e.preventDefault();
                 } else if (e.key === 'ArrowDown') {
@@ -125,116 +142,84 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const prevLi = li.previousElementSibling;
                     if (prevLi) prevLi.focus();
                     e.preventDefault();
+                } else if (e.key === 'Escape') { // Aggiunto per chiudere con ESC
+                    closeDropdown(dropdown);
+                    toggleButton.focus();
+                    e.preventDefault();
                 }
             });
         });
 
-        const selectOption = (value, label) => {
-            toggleButton.textContent = label;
-            optionsList.querySelectorAll('li').forEach(li => li.classList.remove('selected'));
-            const selectedLi = optionsList.querySelector(`li[data-value="${value}"]`);
-            if (selectedLi) selectedLi.classList.add('selected');
-
-            selectCallback(value); // Chiama la callback con il valore selezionato
-        };
-
-        const toggleDropdown = (event) => {
-            dropdown.classList.toggle('open');
-            toggleButton.setAttribute('aria-expanded', dropdown.classList.contains('open'));
-            if (dropdown.classList.contains('open')) {
-                const firstOption = optionsList.querySelector('li[role="option"]');
-                if (firstOption) firstOption.focus();
-            } else {
-                toggleButton.focus();
-            }
-            // event.preventDefault(); // IMPORTANTE: impedisce il default del click che potrebbe causare lo scroll
-            // event.stopPropagation();
-        };
-
-        const closeDropdown = () => {
-            dropdown.classList.remove('open');
-            toggleButton.setAttribute('aria-expanded', 'false');
-        };
-
-        toggleButton.addEventListener('click', toggleDropdown);
-
-        toggleButton.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                toggleDropdown(e);
-            } else if (e.key === 'ArrowDown' && !dropdown.classList.contains('open')) {
-                toggleDropdown(e);
-            } else if (e.key === 'ArrowUp' && dropdown.classList.contains('open')) {
-                e.preventDefault();
-            }
-        });
-
-        document.addEventListener('click', (event) => {
-            if (!dropdown.contains(event.target)) {
-                closeDropdown();
-            }
-        });
-
-        // Imposta il valore iniziale se fornito
+        // Inizializza il valore se fornito
         if (initialValue) {
-            const normalizedInitialValue = initialValue.toLowerCase().replace(/\s/g, '');
-            const initialOption = optionsArray.find(opt => opt.value === normalizedInitialValue);
-            if (initialOption) {
-                selectOption(initialOption.value, initialOption.label);
-            } else {
-                // Se il valore iniziale non corrisponde a nessuna opzione,
-                // imposta il placeholder e resetta la variabile selezionata
-                selectCallback(''); // O un valore predefinito per indicare "nessuna selezione"
-                toggleButton.textContent = placeholderText;
-            }
+            selectOption(initialValue);
+        } else {
+            toggleButton.textContent = placeholderText; // Imposta il placeholder se non c'è valore iniziale
+        }
+
+        // Event listener per il pulsante toggle
+        toggleButton.addEventListener('click', (event) => {
+            // Chiudi tutte le altre dropdown aperte
+            document.querySelectorAll('.custom-dropdown.open').forEach(openDropdown => {
+                if (openDropdown !== dropdown) {
+                    openDropdown.classList.remove('open');
+                }
+            });
+            dropdown.classList.toggle('open');
+            event.stopPropagation(); // Impedisce la propagazione per evitare la chiusura immediata da document click
+        });
+
+        // Restituisci la funzione per impostare il valore dall'esterno
+        dropdown.setValue = (value) => {
+            selectOption(value);
+        };
+    }
+
+    // --- Funzione per chiudere una specifica dropdown o tutte ---
+    function closeDropdown(specificDropdown = null) {
+        if (specificDropdown) {
+            specificDropdown.classList.remove('open');
+        } else {
+            document.querySelectorAll('.custom-dropdown.open').forEach(dropdown => {
+                dropdown.classList.remove('open');
+            });
         }
     }
 
-    // NON USARE PIÙ QUESTA FUNZIONE O LE SUE CHIAMATE ALL'INIZIO DEL DOC
-    // function populateDropdown(selectElement, options, selectedValue = '') {
-    //     selectElement.innerHTML = '';
-    //     const normalizedSelectedValue = (selectedValue || '').toLowerCase().replace(/\s/g, '');
-    //     options.forEach(optionText => {
-    //         const option = document.createElement('option');
-    //         option.value = optionText.toLowerCase().replace(/\s/g, '');
-    //         option.textContent = optionText;
-    //         if (option.value === normalizedSelectedValue) {
-    //             option.selected = true;
-    //         }
-    //         selectElement.appendChild(option);
-    //     });
-    // }
+    // --- Listener globale per chiudere le dropdown cliccando fuori ---
+    document.addEventListener('click', (event) => {
+        if (!event.target.closest('.custom-dropdown')) {
+            closeDropdown(); // Chiude tutte le dropdown se il click non è su una dropdown
+        }
+    });
 
-    // Rimuovi queste chiamate iniziali a populateDropdown (sono state la causa dell'errore)
-    // populateDropdown(editEventTypeSelect, gameTypes);
-    // populateDropdown(editEventGenderSelect, genders);
-    // populateDropdown(currencyTypeSelect, currencies);
-    // populateDropdown(costTypeSelect, costTypes);
+    // --- Inizializzazione delle dropdown custom all'avvio ---
+    // Passiamo null come initialValue per ora, verrà impostato dopo il fetch dell'evento
+    initializeCustomDropdown('customEventType', gameTypes, 'Select Event Type');
+    initializeCustomDropdown('customGenderType', genders, 'Select Gender');
+    initializeCustomDropdown('customCurrencyType', currencies, 'Select Currency');
+    initializeCustomDropdown('customCostType', costTypes, 'Select Cost Type');
 
+    // Assegna le funzioni setValue alle variabili globali per comodità (opzionale, ma utile)
+    // Queste variabili ora contengono la funzione setValue per ogni dropdown
+    const setEventType = document.getElementById('customEventType').setValue;
+    const setGenderType = document.getElementById('customGenderType').setValue;
+    const setCurrencyType = document.getElementById('customCurrencyType').setValue;
+    const setCostType = document.getElementById('customCostType').setValue;
 
     // Funzione per mostrare messaggi
-    function showMessage(msg, type = 'info') {
+    const showMessage = (msg, type) => {
         messageDiv.textContent = msg;
         messageDiv.className = `message ${type}`;
-        // setTimeout(() => messageDiv.textContent = '', 5000); // Rimuove il messaggio dopo 5 secondi
-    }
+        messageDiv.style.display = 'block';
+    };
 
-    // Funzione per resettare il form e nascondere la sezione di modifica
-    function resetForm() {
-        editEventForm.reset();
-        eventEditFormContainer.style.display = 'none';
-        messageDiv.textContent = '';
-        messageDiv.className = 'message';
-        geolocationMessageDiv.textContent = '';
-        geolocationMessageDiv.className = 'message';
+    // Funzione per nascondere messaggi
+    const hideMessage = () => {
+        messageDiv.style.display = 'none';
+    };
 
-        // Resetta i valori delle custom dropdown al placeholder
-        initializeCustomDropdown('customEventType', gameTypes, 'Select Game Type', value => selectedGameType = value);
-        initializeCustomDropdown('customEventGender', genders, 'Select Gender', value => selectedGender = value);
-        initializeCustomDropdown('customEventCurrency', currencies, 'Select Currency', value => selectedCurrency = value);
-        initializeCustomDropdown('customCostType', costTypes, 'Not Specified', value => selectedCostType = value);
-    }
-
-
+    // Funzione per recuperare i dati dell'evento
     searchButton.addEventListener('click', async () => {
         const eventId = searchEventIdInput.value.trim();
         if (!eventId) {
@@ -242,8 +227,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        showMessage('Searching for event...', 'info');
-        eventEditFormContainer.style.display = 'none'; // Nasconde il form mentre cerchiamo
+        hideMessage();
+        eventEditFormContainer.style.display = 'none'; // Nascondi il form durante la ricerca
 
         try {
             const response = await fetch(JSONBIN_EVENTS_READ_URL, {
@@ -257,219 +242,228 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             const data = await response.json();
-            const events = Array.isArray(data.record) ? data.record : [];
-            const event = events.find(e => e.id === eventId);
+            const events = data.record;
+            const eventToEdit = events.find(event => event.id === eventId);
 
-            if (event) {
-                // Popola il form con i dati dell'evento
-                eventIdInput.value = event.id;
-                editEventNameInput.value = event.name || '';
-                editEventLocationInput.value = event.location || '';
-                editLatitudeInput.value = event.latitude || '';
-                editLongitudeInput.value = event.longitude || '';
+            if (eventToEdit) {
+                // Popola i campi del form
+                eventIdInput.value = eventToEdit.id;
+                editEventNameInput.value = eventToEdit.name;
+                editEventLocationInput.value = eventToEdit.location;
+                editLatitudeInput.value = eventToEdit.latitude || '';
+                editLongitudeInput.value = eventToEdit.longitude || '';
 
-                // Utilizza initializeCustomDropdown per popolare e impostare il valore
-                // Il valore iniziale viene passato come ultimo parametro
-                initializeCustomDropdown('customEventType', gameTypes, 'Select Game Type', value => selectedGameType = value, event.type);
-                initializeCustomDropdown('customEventGender', genders, 'Select Gender', value => selectedGender = value, event.gender);
-                initializeCustomDropdown('customEventCurrency', currencies, 'Select Currency', value => selectedCurrency = value, event.cost?.currency);
-                initializeCustomDropdown('customCostType', costTypes, 'Not Specified', value => selectedCostType = value, event.cost?.type);
+                // Imposta i valori delle custom dropdown usando le funzioni setValue
+                setEventType(eventToEdit.type);
+                setGenderType(eventToEdit.gender);
+                setCurrencyType(eventToEdit.currency);
+                setCostType(eventToEdit.costType);
 
+                editEventStartDateInput.value = eventToEdit.startDate;
+                editEventEndDateInput.value = eventToEdit.endDate;
+                editEventDescriptionTextarea.value = eventToEdit.description;
+                editEventLinkInput.value = eventToEdit.link;
+                editContactEmailInput.value = eventToEdit.contactEmail;
+                editEventCostInput.value = eventToEdit.cost;
 
-                editEventStartDateInput.value = event.startDate || '';
-                editEventEndDateInput.value = event.endDate || '';
-                editEventDescriptionTextarea.value = event.description || '';
-                editEventLinkInput.value = event.link || '';
-                editContactEmailInput.value = event.contactEmail || '';
-                editEventCostInput.value = event.cost !== undefined && event.cost !== null ? event.cost : '';
-
-
-                eventEditFormContainer.style.display = 'block';
-                showMessage('Event found. You can now edit its details.', 'success');
+                eventEditFormContainer.style.display = 'block'; // Mostra il form
+                showMessage('Event loaded successfully!', 'success');
+                console.log('Event loaded:', eventToEdit);
             } else {
-                showMessage('Event not found. Please check the ID.', 'error');
-                resetForm();
+                showMessage('Event not found.', 'error');
+                eventEditFormContainer.style.display = 'none';
             }
-
         } catch (error) {
             console.error('Error fetching event:', error);
-            showMessage('Error searching for event. Please try again later.', 'error');
-            resetForm();
+            showMessage('Error loading event. Please try again.', 'error');
         }
     });
 
-    editEventLocationInput.addEventListener('blur', async () => {
+    // Funzione per geocodificare la località
+    editEventLocationInput.addEventListener('change', async () => {
         const location = editEventLocationInput.value.trim();
-        if (!location) {
+        if (location) {
+            try {
+                geolocationMessageDiv.textContent = 'Searching coordinates...';
+                geolocationMessageDiv.style.color = '#555';
+
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`, {
+                    headers: {
+                        'User-Agent': NOMINATIM_USER_AGENT
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data && data.length > 0) {
+                    editLatitudeInput.value = data[0].lat;
+                    editLongitudeInput.value = data[0].lon;
+                    geolocationMessageDiv.textContent = 'Coordinates found!';
+                    geolocationMessageDiv.style.color = 'green';
+                } else {
+                    editLatitudeInput.value = '';
+                    editLongitudeInput.value = '';
+                    geolocationMessageDiv.textContent = 'Location not found. Please enter coordinates manually or refine location name.';
+                    geolocationMessageDiv.style.color = 'orange';
+                }
+            } catch (error) {
+                console.error('Error fetching geolocation:', error);
+                geolocationMessageDiv.textContent = 'Error fetching coordinates. Please try again or enter manually.';
+                geolocationMessageDiv.style.color = 'red';
+            }
+        } else {
             editLatitudeInput.value = '';
             editLongitudeInput.value = '';
-            geolocationMessageDiv.textContent = 'Location field is empty.';
-            geolocationMessageDiv.className = 'message info';
-            return;
-        }
-
-        geolocationMessageDiv.textContent = 'Searching for coordinates...';
-        geolocationMessageDiv.className = 'message info';
-
-        try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`, {
-                headers: {
-                    'User-Agent': NOMINATIM_USER_AGENT
-                }
-            });
-            const data = await response.json();
-
-            if (data && data.length > 0) {
-                editLatitudeInput.value = parseFloat(data[0].lat).toFixed(6);
-                editLongitudeInput.value = parseFloat(data[0].lon).toFixed(6);
-                geolocationMessageDiv.textContent = 'Coordinates found.';
-                geolocationMessageDiv.className = 'message success';
-            } else {
-                editLatitudeInput.value = '';
-                editLongitudeInput.value = '';
-                geolocationMessageDiv.textContent = 'Location not found. Please enter manually or try a different search term.';
-                geolocationMessageDiv.className = 'message error';
-            }
-        } catch (error) {
-            console.error('Error fetching geolocation:', error);
-            geolocationMessageDiv.textContent = 'Error fetching coordinates.';
-            geolocationMessageDiv.className = 'message error';
+            geolocationMessageDiv.textContent = '';
         }
     });
 
+    // Gestione dell'invio del form di modifica
     editEventForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        showMessage('Saving changes...', 'info');
-
         const eventId = eventIdInput.value;
-        const updatedEvent = {
-            id: eventId, // Assicurati che l'ID sia incluso
-            name: editEventNameInput.value.trim(),
-            location: editEventLocationInput.value.trim(),
-            latitude: parseFloat(editLatitudeInput.value),
-            longitude: parseFloat(editLongitudeInput.value),
-            // Usa le variabili globali aggiornate dalle custom dropdown
+        const newEventData = {
+            id: eventId,
+            name: editEventNameInput.value,
+            location: editEventLocationInput.value,
+            latitude: parseFloat(editLatitudeInput.value) || null,
+            longitude: parseFloat(editLongitudeInput.value) || null,
+            // Usa i valori dalle variabili globali aggiornate dalle custom dropdown
             type: selectedGameType,
             gender: selectedGender,
-            startDate: editEventStartDateInput.value,
-            endDate: editEventEndDateInput.value || null,
-            description: editEventDescriptionTextarea.value.trim(),
-            link: editEventLinkInput.value.trim() || null,
-            contactEmail: editContactEmailInput.value.trim() || null,
-            cost: editEventCostInput.value ? parseFloat(editEventCostInput.value) : null,
-            // Usa le variabili globali aggiornate dalle custom dropdown
             currency: selectedCurrency,
             costType: selectedCostType,
+            startDate: editEventStartDateInput.value,
+            endDate: editEventEndDateInput.value,
+            description: editEventDescriptionTextarea.value,
+            link: editEventLinkInput.value,
+            contactEmail: editContactEmailInput.value,
+            cost: parseFloat(editEventCostInput.value) || null,
+            isFeatured: false // Mantiene lo stato originale o lo imposta come default se non gestito
         };
 
-        // Recupera tutti gli eventi, aggiorna quello specifico e riscrivi l'intero bin
         try {
-            const response = await fetch(JSONBIN_EVENTS_READ_URL, {
+            // Recupera tutti gli eventi esistenti
+            const readResponse = await fetch(JSONBIN_EVENTS_READ_URL, {
                 headers: {
                     'X-Master-Key': JSONBIN_MASTER_KEY
                 }
             });
-            const data = await response.json();
-            let allEvents = Array.isArray(data.record) ? data.record : [];
+            if (!readResponse.ok) {
+                throw new Error(`HTTP error! status: ${readResponse.status}`);
+            }
+            const existingData = await readResponse.json();
+            let events = existingData.record || [];
 
-            const eventIndex = allEvents.findIndex(e => e.id === eventId);
+            // Trova e aggiorna l'evento
+            const eventIndex = events.findIndex(event => event.id === eventId);
             if (eventIndex !== -1) {
-                // Mantieni eventuali proprietà esistenti non modificate dal form (es. featured)
-                allEvents[eventIndex] = { ...allEvents[eventIndex], ...updatedEvent };
+                // Mantieni lo stato isFeatured esistente se non lo modifichi
+                newEventData.isFeatured = events[eventIndex].isFeatured;
+                events[eventIndex] = newEventData;
             } else {
-                throw new Error("Event not found in current bin data during update.");
+                showMessage('Error: Event not found for update.', 'error');
+                return;
             }
 
-            const updateResponse = await fetch(JSONBIN_EVENTS_WRITE_URL, {
+            // Invia l'intero array aggiornato a JSONBin
+            const writeResponse = await fetch(JSONBIN_EVENTS_WRITE_URL, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Master-Key': JSONBIN_MASTER_KEY
                 },
-                body: JSON.stringify(allEvents)
+                body: JSON.stringify(events)
             });
 
-            if (!updateResponse.ok) {
-                const errorText = await updateResponse.text();
-                throw new Error(`HTTP error! status: ${updateResponse.status}, message: ${errorText}`);
+            if (!writeResponse.ok) {
+                throw new Error(`HTTP error! status: ${writeResponse.status}`);
             }
 
+            const result = await writeResponse.json();
+            console.log('Event updated successfully:', result);
             showMessage('Event updated successfully!', 'success');
-            // resetForm(); // Se preferisci resettare dopo il salvataggio
         } catch (error) {
             console.error('Error updating event:', error);
-            showMessage(`Error updating event: ${error.message}`, 'error');
+            showMessage('Error updating event. Please try again.', 'error');
         }
     });
 
-    // NUOVO: Listener per il bottone di eliminazione
-    deleteEventButton.addEventListener('click', async () => {
-        const eventIdToDelete = eventIdInput.value.trim();
+    // Gestione del pulsante Elimina Evento
+    if (deleteEventButton) {
+        deleteEventButton.addEventListener('click', async () => {
+            const eventIdToDelete = eventIdInput.value.trim();
+            if (!eventIdToDelete) {
+                showMessage('No event ID to delete.', 'error');
+                return;
+            }
 
-        if (!eventIdToDelete) {
-            showMessage('No event ID found to delete.', 'error');
-            return;
-        }
+            if (!confirm(`Are you sure you want to delete event with ID: ${eventIdToDelete}?`)) {
+                return; // L'utente ha annullato
+            }
 
-        const confirmDelete = confirm(`Are you sure you want to delete event with ID: ${eventIdToDelete}? This action cannot be undone.`);
+            hideMessage();
 
-        if (!confirmDelete) {
-            showMessage('Event deletion cancelled.', 'info');
-            return;
-        }
+            try {
+                // 1. Recupera tutti gli eventi
+                const readResponse = await fetch(JSONBIN_EVENTS_READ_URL, {
+                    headers: {
+                        'X-Master-Key': JSONBIN_MASTER_KEY
+                    }
+                });
 
-        showMessage('Deleting event...', 'info');
-
-        try {
-            const response = await fetch(JSONBIN_EVENTS_READ_URL, {
-                headers: {
-                    'X-Master-Key': JSONBIN_MASTER_KEY
+                if (!readResponse.ok) {
+                    throw new Error(`HTTP error! status: ${readResponse.status}`);
                 }
-            });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const data = await readResponse.json();
+                let events = data.record || [];
+
+                // 2. Filtra l'evento da eliminare
+                const initialLength = events.length;
+                events = events.filter(event => event.id !== eventIdToDelete);
+
+                if (events.length === initialLength) {
+                    showMessage('Event not found for deletion.', 'error');
+                    return;
+                }
+
+                // 3. Invia l'array aggiornato (senza l'evento eliminato) a JSONBin
+                const writeResponse = await fetch(JSONBIN_EVENTS_WRITE_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': JSONBIN_MASTER_KEY
+                    },
+                    body: JSON.stringify(events)
+                });
+
+                if (!writeResponse.ok) {
+                    throw new Error(`HTTP error! status: ${writeResponse.status}`);
+                }
+
+                console.log(`Event ${eventIdToDelete} deleted successfully.`);
+                showMessage('Event deleted successfully!', 'success');
+
+                // Resetta il form e nascondilo
+                editEventForm.reset();
+                eventEditFormContainer.style.display = 'none';
+
+                // Resetta le dropdown custom al loro stato iniziale
+                document.getElementById('customEventType').setValue('');
+                document.getElementById('customGenderType').setValue('');
+                document.getElementById('customCurrencyType').setValue('');
+                document.getElementById('customCostType').setValue('');
+
+            } catch (error) {
+                console.error('Error deleting event:', error);
+                showMessage('Error deleting event. Please try again.', 'error');
             }
-
-            const data = await response.json();
-            let allEvents = Array.isArray(data.record) ? data.record : [];
-
-            const updatedEvents = allEvents.filter(event => event.id !== eventIdToDelete);
-
-            if (updatedEvents.length === allEvents.length) {
-                throw new Error("Event not found in the database. Could not delete.");
-            }
-
-            const updateResponse = await fetch(JSONBIN_EVENTS_WRITE_URL, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Master-Key': JSONBIN_MASTER_KEY
-                },
-                body: JSON.stringify(updatedEvents)
-            });
-
-            if (!updateResponse.ok) {
-                const errorText = await updateResponse.text();
-                throw new Error(`HTTP error! status: ${updateResponse.status}, message: ${errorText}`);
-            }
-
-            showMessage('Event deleted successfully!', 'success');
-            resetForm();
-            searchEventIdInput.value = '';
-        } catch (error) {
-            console.error('Error deleting event:', error);
-            showMessage(`Error deleting event: ${error.message}`, 'error');
-        }
-    });
-
-    // Inizializza le custom dropdown all'avvio (con placeholder)
-    // Non le popoliamo con valori da eventData qui perché eventData è disponibile solo dopo la ricerca
-    // Le inizializziamo con i loro placeholder iniziali.
-    initializeCustomDropdown('customEventType', gameTypes, 'Select Game Type', value => selectedGameType = value);
-    initializeCustomDropdown('customEventGender', genders, 'Select Gender', value => selectedGender = value);
-    initializeCustomDropdown('customEventCurrency', currencies, 'Select Currency', value => selectedCurrency = value);
-    initializeCustomDropdown('customCostType', costTypes, 'Not Specified', value => selectedCostType = value);
-
-}); // Fine DOMContentLoaded
+        });
+    }
+});
