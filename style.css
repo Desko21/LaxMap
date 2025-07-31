@@ -866,3 +866,98 @@ form input[type="image"] {
         color: #555;
     }
 }
+
+/* Custom Dropdown Styling */
+.custom-dropdown {
+    position: relative;
+    display: inline-block; /* O block, a seconda del layout desiderato */
+    width: 100%; /* Occupa l'intera larghezza disponibile */
+    font-family: Arial, sans-serif; /* Assicurati che il font sia consistente */
+}
+
+.custom-dropdown .dropdown-toggle {
+    background-color: #fff; /* Sfondo del bottone */
+    color: #333;
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box; /* Include padding e border nella larghezza */
+    -webkit-appearance: none; /* Rimuove lo stile nativo del bottone */
+    -moz-appearance: none;
+    appearance: none;
+    font-size: 1em; /* Assicurati la dimensione del font */
+}
+
+.custom-dropdown .dropdown-toggle::after {
+    content: '\25BC'; /* Freccia giù */
+    font-size: 0.8em;
+    margin-left: 10px;
+    transition: transform 0.3s ease;
+}
+
+.custom-dropdown.open .dropdown-toggle::after {
+    transform: rotate(180deg); /* Freccia su quando aperto */
+}
+
+.custom-dropdown .dropdown-options {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: absolute;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    width: 100%;
+    max-height: 200px; /* Limita l'altezza e aggiunge scroll */
+    overflow-y: auto;
+    z-index: 1000; /* Assicurati che sia sopra altri elementi */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    display: none; /* Nascosto di default */
+}
+
+.custom-dropdown.open .dropdown-options {
+    display: block; /* Mostrato quando la dropdown è aperta */
+}
+
+.custom-dropdown .dropdown-options li {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.custom-dropdown .dropdown-options li:hover,
+.custom-dropdown .dropdown-options li.selected {
+    background-color: #f0f0f0; /* Colore al passaggio del mouse o selezionato */
+}
+
+/* Stile per input che devono stare affiancati */
+.full-width-input-inline {
+    width: calc(33.33% - 10px); /* Regola la larghezza per stare su 3 colonne con un po' di spazio */
+    box-sizing: border-box;
+    display: inline-block; /* Importante per stare sulla stessa riga */
+    margin-right: 10px; /* Spazio tra gli elementi */
+    vertical-align: top; /* Per allineare se hanno altezze diverse */
+}
+
+/* Regola per l'ultimo elemento o per un layout diverso se necessario */
+.cost-details .custom-dropdown.full-width-input-inline:last-child,
+.cost-details input.full-width-input-inline:last-child {
+    margin-right: 0;
+}
+
+/* Media query per full-width-input-inline su schermi piccoli, se necessario */
+@media (max-width: 768px) {
+    .full-width-input-inline {
+        width: 100%; /* Su mobile, tornano a larghezza piena */
+        display: block;
+        margin-right: 0;
+        margin-bottom: 10px; /* Spazio tra gli elementi verticali */
+    }
+}
