@@ -301,17 +301,33 @@ form button:hover {
 }
 
 .feature-button {
-    background-color: #EB9B43;
+    /* Stili esistenti del tuo pulsante */
+    background-color: #007bff; /* Esempio di colore */
     color: white;
-    padding: 8px 15px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 0.9rem;
+    transition: background-color 0.3s ease;
+
+    /* --- NUOVE PROPRIETÀ PER INGRANDIRE IL PULSANTE --- */
+    padding: 12px 25px; /* Aumenta il padding (spazio interno) per renderlo più grande */
+    font-size: 1.1em; /* Aumenta la dimensione del testo */
+    font-weight: bold; /* Rendi il testo più spesso */
+    margin-top: 15px; /* Aggiungi un po' di spazio sopra se necessario */
+    display: inline-block; /* Assicura che padding e margin funzionino correttamente */
+    text-align: center; /* Centra il testo */
 }
 
 .feature-button:hover {
     background-color: #218838;
+}
+
+/* Stile per l'icona a stella all'interno del pulsante */
+.feature-button .star-icon {
+    font-size: 1.2em; /* Rendi la stella leggermente più grande del testo */
+    margin-left: 8px; /* Spazio tra testo e stella */
+    vertical-align: middle; /* Allinea verticalmente la stella */
+    color: #FFD700; /* Colore oro per la stella */
 }
 
 .unfeature-button {

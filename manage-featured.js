@@ -1,11 +1,11 @@
 // manage-featured.js
 
-import { 
+import {
     JSONBIN_MASTER_KEY,
     // Note: JSONBIN_READ_URL and JSONBIN_UPDATE_URL are defined locally
     // If you prefer, you can also import them from config.js
-	JSONBIN_EVENTS_READ_URL,
-	JSONBIN_LOGS_WRITE_URL // Make sure this is imported from config.js
+    JSONBIN_EVENTS_READ_URL,
+    JSONBIN_LOGS_WRITE_URL // Make sure this is imported from config.js
 } from './config.js'; // Ensure JSONBIN_LOGS_WRITE_URL is in config.js
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const PAYPAL_RETURN_URL = 'https://tuodominio.com/grazie-paypal.html'; // URL dopo pagamento riuscito
     const PAYPAL_CANCEL_URL = 'https://tuodominio.com/annulla-pagamento.html'; // URL dopo pagamento annullata
     // NOTA: notify_url richiede un backend per IPN, non incluso in questo setup frontend
-    // const PAYPAL_NOTIFY_URL = 'https://tuodominio.com/ipn-listener.php'; 
+    // const PAYPAL_NOTIFY_URL = 'https://tuodominio.com/ipn-listener.php';
 
     const eventListDiv = document.getElementById('event-list-for-featured-management');
     const messageDiv = document.getElementById('message');
@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const logEntry = {
             timestamp: timestamp,
-            action: action, 
+            action: action,
             ipAddress: userIp,
             event: {
                 id: eventDetails.id, // Using eventDetails.id (which is createdAt in this context)
@@ -55,13 +55,16 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            const readLogResponse = await fetch(JSONBIN_LOGS_WRITE_URL + '/latest', {
+            // Note: JSONBIN_LOGS_WRITE_URL + '/latest' is typically for reading the latest version.
+            // For appending, you usually read the bin and then PUT the new array to the base URL.
+            // Assuming JSONBIN_LOGS_WRITE_URL is the correct base URL for the logs bin.
+            const readLogResponse = await fetch(JSONBIN_LOGS_WRITE_URL + '/latest', { // Added '/latest' for reading if it's a versioned bin
                 headers: { 'X-Master-Key': JSONBIN_MASTER_KEY }
             });
             let existingLogs = [];
             if (readLogResponse.ok) {
                 const logData = await readLogResponse.json();
-                existingLogs = logData.record || [];
+                existingLogs = Array.isArray(logData.record) ? logData.record : []; // Ensure it's an array
             } else {
                 console.warn("Could not read existing logs or bin does not exist, starting fresh.");
             }
@@ -128,8 +131,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         events.forEach(event => {
             const eventItem = document.createElement('div');
-            eventItem.className = 'tournament-item'; 
-            
+            eventItem.className = 'tournament-item';
+
             let actionButtonHtml = '';
             let sixesIconHtml = '';
 
@@ -139,7 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Mostra il pulsante "Make Featured" SOLO se l'evento NON è già featured
-            if (!event.featured) {
+            // Correzione qui: da event.featured a event.isFeatured
+            if (!event.isFeatured) {
                 // Aggiungi la stellina al pulsante "Make Featured"
                 actionButtonHtml = `
                     <button class="feature-button" data-id="${event.createdAt}" data-event-name="${event.name}" data-event-location="${event.location}">
@@ -168,26 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
             button.addEventListener('click', (e) => {
                 const eventId = e.target.dataset.id; // This is createdAt
                 const eventName = e.target.dataset.eventName;
-                const eventLocation = e.target.dataset.eventLocation; // Get location for logging
-                
-                // --- We can remove the previous log here since we are logging inside initiatePayPalPayment ---
-                // No longer needed here as the more precise log happens inside initiatePayPalPayment
-                // const selectedEvent = allEvents.find(event => event.createdAt === eventId);
-                // if (selectedEvent) {
-                //     logActivity('CLICK_MAKE_FEATURED_BUTTON', { 
-                //         id: selectedEvent.id, 
-                //         name: selectedEvent.name, 
-                //         location: selectedEvent.location 
-                //     });
-                // } else {
-                //     console.warn('Could not find event in allEvents for logging.');
-                //     logActivity('CLICK_MAKE_FEATURED_BUTTON_FALLBACK', { 
-                //         id: eventId, 
-                //         name: eventName, 
-                //         location: eventLocation 
-                //     });
-                // }
-                // --- END removed NEW ---
+                const eventLocation = e.target.dataset.eventLocation;
 
                 initiatePayPalPayment(eventId, eventName); // PayPal call
             });
@@ -198,17 +183,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- NUOVA RIGA: Logga l'inizio del pagamento PayPal ---
         const selectedEvent = allEvents.find(event => event.createdAt === eventId);
         if (selectedEvent) {
-            logActivity('INITIATE_PAYPAL_PAYMENT', { 
-                id: selectedEvent.id, 
-                name: selectedEvent.name, 
-                location: selectedEvent.location 
+            logActivity('INITIATE_PAYPAL_PAYMENT', {
+                id: selectedEvent.id,
+                name: selectedEvent.name,
+                location: selectedEvent.location
             });
         } else {
             console.warn('Could not find event in allEvents for logging PayPal initiation.');
-            logActivity('INITIATE_PAYPAL_PAYMENT_FALLBACK', { 
-                id: eventId, 
-                name: eventName, 
-                location: 'Unknown (from PayPal initiation)' 
+            logActivity('INITIATE_PAYPAL_PAYMENT_FALLBACK', {
+                id: eventId,
+                name: eventName,
+                location: 'Unknown (from PayPal initiation)'
             });
         }
         // --- Fine NUOVA RIGA ---
@@ -222,18 +207,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const form = document.createElement('form');
         form.action = 'https://www.paypal.com/cgi-bin/webscr';
         form.method = 'post';
-        form.target = '_top'; 
+        form.target = '_top';
 
         const fields = {
             cmd: '_xclick',
             business: PAYPAL_BUSINESS_EMAIL_OR_ID,
-            item_name: `${PAYPAL_ITEM_NAME} - ${eventName}`, 
+            item_name: `${PAYPAL_ITEM_NAME} - ${eventName}`,
             amount: PAYPAL_AMOUNT,
             currency_code: PAYPAL_CURRENCY_CODE,
             no_shipping: '1',
             return: PAYPAL_RETURN_URL,
             cancel_return: PAYPAL_CANCEL_URL,
-            custom: eventId 
+            custom: eventId
         };
 
         for (const key in fields) {
@@ -254,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.body.appendChild(form);
         form.submit();
-        document.body.removeChild(form); 
+        document.body.removeChild(form);
     }
 
     function showMessage(msg, type) {
@@ -263,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             messageDiv.textContent = '';
             messageDiv.className = 'message';
-        }, 5000); 
+        }, 5000);
     }
 
     // Initial load of events when the page loads
