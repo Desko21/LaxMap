@@ -90,9 +90,9 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
     };
 
     const costTypeDisplayNames = {
-        'not_specified': '',
-        'perperson': 'per person',
-        'perteam': 'per team'
+        '': '', // Questo gestisce il caso "Not Specified" con valore vuoto
+        'per-person': 'per person', // MODIFICATO: ora con il trattino
+        'per-team': 'per team'      // MODIFICATO: ora con il trattino
     };
 
     function populateFilterDropdown(selectElement, options) {
