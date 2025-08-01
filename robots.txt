@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /delete-event.html
+Disallow: /logs.html
+
+Sitemap: https://laxmap.app/sitemap.xml
