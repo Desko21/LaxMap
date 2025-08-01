@@ -242,8 +242,8 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
     // --- Funzione per caricare e visualizzare gli eventi nella tabella ---
     const fetchAndDisplayEvents = async () => {
         hideMessage();
-        // Messaggio di caricamento nella tabella
-        eventsTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Caricamento eventi...</td></tr>';
+        // Messaggio di caricamento nella tabella - AGGIORNATO COLSPAN A 8
+        eventsTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Caricamento eventi...</td></tr>';
 
         try {
             const response = await fetch(JSONBIN_EVENTS_READ_URL, {
@@ -255,7 +255,8 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
             if (!response.ok) {
                 if (response.status === 404) {
                     showMessage('Nessun evento trovato. Il database degli eventi potrebbe essere vuoto o non ancora creato.', 'info');
-                    eventsTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Nessun evento disponibile.</td></tr>';
+                    // AGGIORNATO COLSPAN A 8
+                    eventsTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Nessun evento disponibile.</td></tr>';
                     return;
                 }
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -266,7 +267,8 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
 
             if (events.length === 0) {
                 showMessage('Nessun evento disponibile per l\'eliminazione.', 'info');
-                eventsTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Nessun evento disponibile.</td></tr>';
+                // AGGIORNATO COLSPAN A 8
+                eventsTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Nessun evento disponibile.</td></tr>';
                 return;
             }
 
@@ -281,8 +283,6 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
             eventsTableBody.innerHTML = ''; // Pulisce il messaggio di caricamento e le righe precedenti
             events.forEach(event => {
                 const row = eventsTableBody.insertRow();
-                // Utilizza `isFeatured` invece di `featured` nel tuo oggetto evento
-                // Aggiungi un attributo data per l'ID, utile per il debug e per l'interazione
                 row.setAttribute('data-event-id', event.id);
 
                 // Formatta la data
@@ -290,14 +290,17 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
                 const endDate = event.endDate ? new Date(event.endDate).toLocaleDateString('it-IT') : '';
                 const dateDisplay = event.endDate ? `${startDate} - ${endDate}` : startDate;
 
-                row.insertCell(0).textContent = event.name || 'N/A';
-                row.insertCell(1).textContent = dateDisplay;
-                row.insertCell(2).textContent = event.location || 'N/A';
-                row.insertCell(3).textContent = event.type || 'N/A';
-                row.insertCell(4).textContent = event.gender || 'N/A';
+                // NUOVA CELLA PER L'ID DELL'EVENTO
+                row.insertCell(0).textContent = event.id || 'N/A';
+                
+                row.insertCell(1).textContent = event.name || 'N/A';
+                row.insertCell(2).textContent = dateDisplay;
+                row.insertCell(3).textContent = event.location || 'N/A';
+                row.insertCell(4).textContent = event.type || 'N/A';
+                row.insertCell(5).textContent = event.gender || 'N/A';
 
                 // Cella per lo stato "Featured" (Checkbox)
-                const featuredCell = row.insertCell(5);
+                const featuredCell = row.insertCell(6); // Indice aggiornato
                 const featuredLabel = document.createElement('label');
                 featuredLabel.className = 'featured-toggle-label';
                 const featuredCheckbox = document.createElement('input');
@@ -313,10 +316,8 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
                     try {
                         await toggleFeaturedStatus(eventId, newFeaturedStatus);
                         showMessage(`Stato 'featured' per '${event.name}' aggiornato a ${newFeaturedStatus ? 'true' : 'false'}!`, 'success');
-                        // Non ricaricare l'intera tabella, aggiorna solo la UI se necessario
                     } catch (error) {
                         e.target.checked = !newFeaturedStatus; // Riporta la checkbox allo stato precedente in caso di errore
-                        // Il messaggio di errore è già gestito all'interno di toggleFeaturedStatus
                     }
                 });
                 featuredLabel.appendChild(featuredCheckbox);
@@ -325,18 +326,18 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
 
 
                 // Cella per il pulsante "Delete"
-                const deleteCell = row.insertCell(6);
+                const deleteCell = row.insertCell(7); // Indice aggiornato
                 const deleteButton = document.createElement('button');
                 deleteButton.classList.add('delete-btn');
                 deleteButton.innerHTML = '<i class="fas fa-trash"></i> Elimina';
-                // Passa tutti e tre i dati necessari per il log
                 deleteButton.addEventListener('click', () => handleDeleteEvent(event.id, event.name, event.location));
                 deleteCell.appendChild(deleteButton);
             });
         } catch (error) {
             console.error('Errore nel caricamento degli eventi:', error);
+            // AGGIORNATO COLSPAN A 8
             showMessage(`Errore nel caricamento degli eventi: ${error.message}`, 'error');
-            eventsTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Errore nel caricamento degli eventi.</td></tr>';
+            eventsTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Errore nel caricamento degli eventi.</td></tr>';
         }
     };
 
