@@ -5,7 +5,7 @@ import {
     NOMINATIM_USER_AGENT,
     JSONBIN_LOGS_READ_URL,
     JSONBIN_LOGS_WRITE_URL
-} from './config.js'; // Assicurati che config.js sia nel percorso corretto
+} from './config.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('edit-event.js loaded.');
@@ -27,16 +27,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const editEventStartDateInput = document.getElementById('editEventStartDate');
     const editEventEndDateInput = document.getElementById('editEventEndDate');
     const editEventDescriptionTextarea = document.getElementById('editEventDescription');
-    const editEventLinkInput = document = document.getElementById('editEventLink');
+    const editEventLinkInput = document.getElementById('editEventLink');
     const editContactEmailInput = document.getElementById('editContactEmail');
     const editEventCostInput = document.getElementById('editEventCost');
 
-    // NUOVO: Bottone per eliminare l'evento
+    // Bottone per eliminare l'evento
     const deleteEventButton = document.getElementById('deleteEventButton');
 
     // Dati per le dropdown
     const gameTypes = [
-        { value: '', label: 'Select Event Type' }, // Aggiunto placeholder, come in add-event.js
+        { value: '', label: 'Select Event Type' },
         { value: 'field', label: 'Field' },
         { value: 'box', label: 'Box' },
         { value: 'sixes', label: 'Sixes' },
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         { value: 'other', label: 'Other' }
     ];
     const genders = [
-        { value: '', label: 'Select Gender' }, // Aggiunto placeholder, come in add-event.js
+        { value: '', label: 'Select Gender' },
         { value: 'men', label: 'Men' },
         { value: 'women', label: 'Women' },
         { value: 'both', label: 'Both' },
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         { value: 'other', label: 'Other' }
     ];
     const currencies = [
-        { value: '', label: 'Select Currency' }, // Aggiunto placeholder, come in add-event.js
+        { value: '', label: 'Select Currency' },
         { value: 'usd', label: 'USD' },
         { value: 'eur', label: 'EUR' },
         { value: 'gbp', label: 'GBP' },
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         { value: 'brl', label: 'R$' }
     ];
     const costTypes = [
-        { value: '', label: 'Not Specified' }, // Corretto il valore da 'not-specified' a ''
+        { value: '', label: 'Not Specified' },
         { value: 'per-person', label: 'Per Person' },
         { value: 'per-team', label: 'Per Team' }
     ];
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        optionsList.innerHTML = ''; // Pulisci le opzioni esistenti
+        optionsList.innerHTML = '';
 
         const selectOption = (value) => {
             const selectedOption = optionsArray.find(opt => opt.value === value);
@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const initialLon = parseFloat(longitude) || 0;
 
         window.map = L.map('map').setView([initialLat, initialLon], 5);
-        window.map.options.minZoom = 0; // Imposta lo zoom minimo per la mappa
+        window.map.options.minZoom = 0;
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -209,7 +209,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             .openPopup();
     }
     // --- Fine modifica per la mappa ---
-
 
     // Inizializzazione delle dropdown custom all'avvio
     initializeCustomDropdown('customEventType', gameTypes, 'Select Event Type');
@@ -232,77 +231,79 @@ document.addEventListener('DOMContentLoaded', async () => {
         messageDiv.style.display = 'none';
     };
 
-    // --- FUNZIONE PER LOGGARE LE ATTIVITÀ (MODIFICATA) ---
-    async function logActivity(actionType, eventDetails) { // Rinominato 'type' in 'actionType' e 'details' in 'eventDetails' per chiarezza
+    // --- FUNZIONE CENTRALIZZATA PER LOGGARE LE ATTIVITÀ (CON RECUPERO IP E STRUTTURA JSON CORRETTA) ---
+    async function logActivity(action, mainEventData, changeDetails = {}) {
+        const timestamp = new Date().toISOString();
+        let userIp = 'N/A';
+
         try {
-            // Nota: L'indirizzo IP dell'utente non è direttamente accessibile in JavaScript lato client
-            // in modo affidabile per ragioni di sicurezza.
-            // In un'applicazione reale, l'IP verrebbe catturato e loggato dal server che riceve la richiesta.
-            // Qui usiamo un placeholder o un esempio per il formato.
-            const ipAddress = "192.168.1.100"; // Placeholder IP per l'esempio
+            const ipResponse = await fetch('https://api.ipify.org?format=json');
+            if (ipResponse.ok) {
+                const ipData = await ipResponse.json();
+                userIp = ipData.ip || 'N/A';
+            } else {
+                console.warn("Could not retrieve IP:", await ipResponse.text());
+            }
+        } catch (ipError) {
+            console.error("Error retrieving IP:", ipError);
+        }
 
-            // 1. Recupera i log esistenti
-            const readResponse = await fetch(JSONBIN_LOGS_READ_URL, {
-                headers: {
-                    'X-Master-Key': JSONBIN_MASTER_KEY
-                }
+        const logEntry = {
+            timestamp: timestamp,
+            action: action,
+            ipAddress: userIp,
+            event: { // Questo oggetto contiene solo i dettagli dell'evento attuale
+                id: mainEventData.id,
+                name: mainEventData.name,
+                location: mainEventData.location
+            }
+        };
+
+        // Aggiungi dettagli specifici di modifica o eliminazione al livello superiore del logEntry
+        if (action === 'EVENT_EDITED') {
+            logEntry.oldName = changeDetails.oldName;
+            logEntry.newName = changeDetails.newName;
+            logEntry.oldLocation = changeDetails.oldLocation;
+            logEntry.newLocation = changeDetails.newLocation;
+            logEntry.updatedAt = new Date().toISOString();
+        } else if (action === 'DELETED_EVENT') {
+            logEntry.deletedAt = new Date().toISOString();
+        }
+
+        try {
+            const readLogResponse = await fetch(JSONBIN_LOGS_READ_URL, {
+                headers: { 'X-Master-Key': JSONBIN_MASTER_KEY }
             });
-
-            if (!readResponse.ok) {
-                console.warn(`Failed to read logs: HTTP status ${readResponse.status}`);
-                return; // Non blocca l'operazione principale se il log fallisce
+            let existingLogs = [];
+            if (readLogResponse.ok) {
+                const logData = await readLogResponse.json();
+                existingLogs = Array.isArray(logData.record) ? logData.record : [];
+            } else {
+                console.warn(`Could not read existing logs (status: ${readLogResponse.status}), starting fresh or bin might be empty.`);
             }
 
-            const data = await readResponse.json();
-            const currentLogs = Array.isArray(data.record) ? data.record : [];
+            existingLogs.push(logEntry);
 
-            // 2. Aggiungi la nuova voce di log
-            const newLogEntry = {
-                timestamp: new Date().toISOString(),
-                action: actionType, // Usa 'action' come nome della chiave
-                ipAddress: ipAddress,
-                event: {
-                    id: eventDetails.eventId,
-                    name: eventDetails.eventName || eventDetails.newName || eventDetails.oldName, // Adatta per nome corrente/nuovo/vecchio
-                    location: eventDetails.location || eventDetails.newLocation || eventDetails.oldLocation // Adatta per località corrente/nuova/vecchia
-                }
-            };
-
-            // Aggiungi dettagli specifici per l'evento modificato o eliminato
-            if (actionType === 'EVENT_EDITED') {
-                newLogEntry.event.oldName = eventDetails.oldName;
-                newLogEntry.event.newName = eventDetails.newName;
-                newLogEntry.event.oldLocation = eventDetails.oldLocation;
-                newLogEntry.event.newLocation = eventDetails.newLocation;
-                newLogEntry.updatedAt = new Date().toISOString(); // Aggiunge un timestamp della modifica
-            } else if (actionType === 'DELETED_EVENT') {
-                newLogEntry.deletedAt = new Date().toISOString();
-            }
-
-            currentLogs.push(newLogEntry);
-
-            // 3. Scrivi l'array aggiornato nel bin dei log
-            const writeResponse = await fetch(JSONBIN_LOGS_WRITE_URL, {
+            const writeLogResponse = await fetch(JSONBIN_LOGS_WRITE_URL, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Master-Key': JSONBIN_MASTER_KEY
+                    'X-Master-Key': JSONBIN_MASTER_KEY,
+                    'X-Bin-Meta': 'false'
                 },
-                body: JSON.stringify(currentLogs)
+                body: JSON.stringify(existingLogs)
             });
 
-            if (!writeResponse.ok) {
-                console.warn(`Failed to write log entry: HTTP status ${writeResponse.status}`);
+            if (!writeLogResponse.ok) {
+                console.error("Failed to save activity log:", await writeLogResponse.text());
             } else {
-                console.log(`Activity logged: ${actionType}`, newLogEntry);
+                console.log(`Activity logged: ${action}`, logEntry);
             }
-
         } catch (error) {
             console.error('Error logging activity:', error);
         }
     }
-    // --- FINE FUNZIONE LOGGING ---
-
+    // --- FINE FUNZIONE LOGGING CENTRALIZZATA ---
 
     searchButton.addEventListener('click', async () => {
         const eventId = searchEventIdInput.value.trim();
@@ -348,7 +349,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 editContactEmailInput.value = eventToEdit.contactEmail || '';
                 editEventCostInput.value = eventToEdit.cost || '';
 
-                // Inizializza la mappa con le coordinate dell'evento
                 initializeMap(eventToEdit.latitude, eventToEdit.longitude);
 
                 eventEditFormContainer.style.display = 'block';
@@ -388,14 +388,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     editLongitudeInput.value = data[0].lon;
                     geolocationMessageDiv.textContent = 'Coordinates found!';
                     geolocationMessageDiv.style.color = 'green';
-                    // Aggiorna la mappa con le nuove coordinate
                     initializeMap(data[0].lat, data[0].lon);
                 } else {
                     editLatitudeInput.value = '';
                     editLongitudeInput.value = '';
                     geolocationMessageDiv.textContent = 'Location not found. Please enter coordinates manually or refine location name.';
                     geolocationMessageDiv.style.color = 'orange';
-                    // Rimuovi il marker o resetta la mappa se le coordinate non sono trovate
                     if (window.currentMarker) {
                         window.map.removeLayer(window.currentMarker);
                         window.currentMarker = null;
@@ -410,7 +408,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             editLatitudeInput.value = '';
             editLongitudeInput.value = '';
             geolocationMessageDiv.textContent = '';
-            // Rimuovi il marker o resetta la mappa se la location è vuota
             if (window.currentMarker) {
                 window.map.removeLayer(window.currentMarker);
                 window.currentMarker = null;
@@ -423,7 +420,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.preventDefault();
 
         const eventId = eventIdInput.value;
-        // Recupera i dati dell'evento prima della modifica per il log
         let originalEventData = null;
 
         try {
@@ -439,7 +435,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showMessage('Error: Event not found for update.', 'error');
                 return;
             }
-            originalEventData = { ...events[eventIndex] }; // Copia i dati originali
+            originalEventData = { ...events[eventIndex] };
 
             const newEventData = {
                 id: eventId,
@@ -457,7 +453,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 link: editEventLinkInput.value || null,
                 contactEmail: editContactEmailInput.value || null,
                 cost: parseFloat(editEventCostInput.value) || null,
-                isFeatured: events[eventIndex].isFeatured // Mantiene lo stato originale di isFeatured
+                isFeatured: events[eventIndex].isFeatured
             };
 
             events[eventIndex] = newEventData;
@@ -480,16 +476,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             showMessage('Event updated successfully!', 'success');
 
             // --- CHIAMATA ALLA FUNZIONE DI LOGGING PER EVENTO MODIFICATO ---
-            await logActivity('EVENT_EDITED', { // Cambiato il tipo di action a "EVENT_EDITED"
-                eventId: newEventData.id,
-                eventName: newEventData.name, // Nome attuale dell'evento
-                location: newEventData.location, // Località attuale dell'evento
-                oldName: originalEventData.name,
-                newName: newEventData.name,
-                oldLocation: originalEventData.location,
-                newLocation: newEventData.location
-                // updatedAt: new Date().toISOString() // Già aggiunto nella funzione logActivity
-            });
+            await logActivity('EVENT_EDITED',
+                { // mainEventData
+                    id: newEventData.id,
+                    name: newEventData.name,
+                    location: newEventData.location
+                },
+                { // changeDetails
+                    oldName: originalEventData.name,
+                    newName: newEventData.name,
+                    oldLocation: originalEventData.location,
+                    newLocation: newEventData.location
+                }
+            );
             // --- FINE CHIAMATA ALLA FUNZIONE DI LOGGING ---
 
         } catch (error) {
@@ -527,7 +526,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const data = await readResponse.json();
                 let events = data.record || [];
 
-                // Trova i dettagli dell'evento prima di eliminarlo, per il log
                 const eventToDeleteDetails = events.find(event => event.id === eventIdToDelete);
 
                 const initialLength = events.length;
@@ -555,12 +553,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showMessage('Event deleted successfully!', 'success');
 
                 // --- CHIAMATA ALLA FUNZIONE DI LOGGING PER EVENTO ELIMINATO ---
-                if (eventToDeleteDetails) { // Logga solo se l'evento è stato effettivamente trovato e "cancellato"
+                if (eventToDeleteDetails) {
                     await logActivity('DELETED_EVENT', {
-                        eventId: eventToDeleteDetails.id,
-                        eventName: eventToDeleteDetails.name,
+                        id: eventToDeleteDetails.id,
+                        name: eventToDeleteDetails.name,
                         location: eventToDeleteDetails.location
-                        // deletedAt: new Date().toISOString() // Già aggiunto nella funzione logActivity
                     });
                 }
                 // --- FINE CHIAMATA ALLA FUNZIONE DI LOGGING ---
@@ -573,7 +570,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('customCurrencyType').setValue('');
                 document.getElementById('customCostType').setValue('');
 
-                // Rimuovi anche il marker dalla mappa se presente
                 if (window.currentMarker) {
                     window.map.removeLayer(window.currentMarker);
                     window.currentMarker = null;
