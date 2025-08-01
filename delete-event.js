@@ -5,16 +5,16 @@ import {
     JSONBIN_MASTER_KEY,
     JSONBIN_EVENTS_READ_URL,
     JSONBIN_EVENTS_WRITE_URL,
-    JSONBIN_LOGS_READ_URL, // Aggiunto per leggere i log esistenti
+    JSONBIN_LOGS_READ_URL,
     JSONBIN_LOGS_WRITE_URL
 } from './config.js';
 
 // Attendi che il DOM sia completamente caricato prima di eseguire lo script
-document.addEventListener('DOMContentLoaded', async () => { // Reso async per fetchAndDisplayEvents iniziale
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('delete-event.js loaded.');
 
     // Riferimenti agli elementi HTML
-    const eventsTableBody = document.getElementById('eventsTableBody'); // Riferimento al tbody della tabella
+    const eventsTableBody = document.getElementById('eventsTableBody');
     const messageDiv = document.getElementById('message');
 
     // --- Funzioni Utility ---
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
         messageDiv.style.display = 'none';
     };
 
-    // --- FUNZIONE CENTRALIZZATA PER LOGGARE LE ATTIVITÀ (CON RECUPERO IP E STRUTTURA JSON CORRETTA) ---
+    // --- FUNZIONE CENTRALIZZATA PER LOGGARE LE ATTIVITÀ ---
     async function logActivity(action, mainEventData, changeDetails = {}) {
         const timestamp = new Date().toISOString();
         let userIp = 'N/A';
@@ -50,14 +50,13 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
             timestamp: timestamp,
             action: action,
             ipAddress: userIp,
-            event: { // Questo oggetto contiene solo i dettagli dell'evento attuale
+            event: {
                 id: mainEventData.id,
                 name: mainEventData.name,
                 location: mainEventData.location
             }
         };
 
-        // Aggiungi dettagli specifici di modifica o eliminazione al livello superiore del logEntry
         if (action === 'DELETED_EVENT') {
             logEntry.deletedAt = new Date().toISOString();
         } else if (action === 'FEATURED_ADDED' || action === 'FEATURED_REMOVED') {
@@ -67,7 +66,6 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
         }
 
         try {
-            // Tentativo di leggere i log esistenti.
             const readLogResponse = await fetch(JSONBIN_LOGS_READ_URL, {
                 headers: { 'X-Master-Key': JSONBIN_MASTER_KEY }
             });
@@ -100,12 +98,11 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
             console.error('Error logging activity:', error);
         }
     }
-    // --- FINE FUNZIONE LOGGING CENTRALIZZATA ---
 
     // --- Funzione per aggiornare lo stato "featured" ---
     async function toggleFeaturedStatus(eventId, newFeaturedStatus) {
         console.log('toggleFeaturedStatus chiamata.');
-        console.log('  ID Evento da trovare (passato dall\'HTML):', eventId);
+        console.log('  ID Evento da trovare:', eventId);
         console.log('  Nuovo stato featured:', newFeaturedStatus);
 
         try {
@@ -118,7 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
             }
 
             const data = await response.json();
-            let events = Array.isArray(data.record) ? data.record : []; // Assicurati che sia un array
+            let events = Array.isArray(data.record) ? data.record : [];
 
             console.log('  Totale eventi caricati da JSONBin.io:', events.length);
 
@@ -129,8 +126,8 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
                 throw new Error('Evento non trovato per l\'aggiornamento dello stato featured.');
             }
 
-            const oldFeaturedStatus = events[eventIndex].isFeatured; // Usa isFeatured
-            events[eventIndex].isFeatured = newFeaturedStatus; // Aggiorna isFeatured
+            const oldFeaturedStatus = events[eventIndex].isFeatured;
+            events[eventIndex].isFeatured = newFeaturedStatus;
 
             const writeResponse = await fetch(JSONBIN_EVENTS_WRITE_URL, {
                 method: 'PUT',
@@ -148,17 +145,15 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
 
             console.log(`Stato 'featured' per l'evento ${eventId} aggiornato a ${newFeaturedStatus}.`);
 
-            // --- LOGGING SPECIFICO AGGIUNTO QUI ---
             const actionType = newFeaturedStatus ? 'FEATURED_ADDED' : 'FEATURED_REMOVED';
             await logActivity(actionType, {
                 id: eventId,
-                name: events[eventIndex].name || 'N/A', // Aggiungi fallback
-                location: events[eventIndex].location || 'N/A' // Aggiungi fallback
+                name: events[eventIndex].name || 'N/A',
+                location: events[eventIndex].location || 'N/A'
             }, {
                 oldStatus: oldFeaturedStatus,
                 newStatus: newFeaturedStatus
             });
-            // --- FINE LOGGING SPECIFICO ---
 
             return true;
         } catch (error) {
@@ -168,14 +163,13 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
         }
     }
 
-
     // --- Funzione per eliminare un evento ---
-    async function handleDeleteEvent(eventId, eventName, eventLocation) { // Passiamo anche eventLocation
+    async function handleDeleteEvent(eventId, eventName, eventLocation) {
         if (!confirm(`Sei sicuro di voler eliminare l'evento "${eventName}" (ID: ${eventId})?`)) {
             return;
         }
 
-        hideMessage(); // Nascondi i messaggi precedenti
+        hideMessage();
         showMessage(`Eliminazione di "${eventName}"...`, 'info');
 
         try {
@@ -191,7 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
             let events = Array.isArray(data.record) ? data.record : [];
 
             const initialLength = events.length;
-            const eventToDelete = events.find(event => event.id === eventId); // Trova l'evento per i dettagli di log
+            const eventToDelete = events.find(event => event.id === eventId);
             events = events.filter(event => event.id !== eventId);
 
             if (events.length === initialLength) {
@@ -215,7 +209,6 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
             console.log(`Evento ${eventId} eliminato con successo.`);
             showMessage(`Evento "${eventName}" eliminato con successo!`, 'success');
 
-            // Logga l'azione di eliminazione
             if (eventToDelete) {
                 await logActivity('DELETED_EVENT', {
                     id: eventToDelete.id,
@@ -226,11 +219,10 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
                 await logActivity('DELETED_EVENT', {
                     id: eventId,
                     name: eventName || 'N/A',
-                    location: eventLocation || 'N/A' // Fallback per location
+                    location: eventLocation || 'N/A'
                 });
             }
 
-            // Ricarica la lista per riflettere le modifiche
             fetchAndDisplayEvents();
 
         } catch (error) {
@@ -242,7 +234,6 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
     // --- Funzione per caricare e visualizzare gli eventi nella tabella ---
     const fetchAndDisplayEvents = async () => {
         hideMessage();
-        // Messaggio di caricamento nella tabella - AGGIORNATO COLSPAN A 8
         eventsTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Caricamento eventi...</td></tr>';
 
         try {
@@ -255,7 +246,6 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
             if (!response.ok) {
                 if (response.status === 404) {
                     showMessage('Nessun evento trovato. Il database degli eventi potrebbe essere vuoto o non ancora creato.', 'info');
-                    // AGGIORNATO COLSPAN A 8
                     eventsTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Nessun evento disponibile.</td></tr>';
                     return;
                 }
@@ -267,47 +257,42 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
 
             if (events.length === 0) {
                 showMessage('Nessun evento disponibile per l\'eliminazione.', 'info');
-                // AGGIORNATO COLSPAN A 8
                 eventsTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Nessun evento disponibile.</td></tr>';
                 return;
             }
 
-            // Ordina gli eventi per data di inizio (dal più recente al più vecchio)
             events.sort((a, b) => {
-                const dateA = a.startDate ? new Date(a.startDate) : new Date(0); // Usa new Date(0) per date non valide
+                const dateA = a.startDate ? new Date(a.startDate) : new Date(0);
                 const dateB = b.startDate ? new Date(b.startDate) : new Date(0);
-                return dateB.getTime() - dateA.getTime(); // Dal più recente al più vecchio
+                return dateB.getTime() - dateA.getTime();
             });
 
-
-            eventsTableBody.innerHTML = ''; // Pulisce il messaggio di caricamento e le righe precedenti
+            eventsTableBody.innerHTML = '';
             events.forEach(event => {
                 const row = eventsTableBody.insertRow();
                 row.setAttribute('data-event-id', event.id);
 
-                // Formatta la data
                 const startDate = event.startDate ? new Date(event.startDate).toLocaleDateString('it-IT') : 'N/A';
                 const endDate = event.endDate ? new Date(event.endDate).toLocaleDateString('it-IT') : '';
                 const dateDisplay = event.endDate ? `${startDate} - ${endDate}` : startDate;
 
-                // NUOVA CELLA PER L'ID DELL'EVENTO
+                // Cella per l'ID dell'Evento
                 row.insertCell(0).textContent = event.id || 'N/A';
                 
+                // Altre celle con indici aggiornati
                 row.insertCell(1).textContent = event.name || 'N/A';
                 row.insertCell(2).textContent = dateDisplay;
                 row.insertCell(3).textContent = event.location || 'N/A';
                 row.insertCell(4).textContent = event.type || 'N/A';
                 row.insertCell(5).textContent = event.gender || 'N/A';
 
-                // Cella per lo stato "Featured" (Checkbox)
-                const featuredCell = row.insertCell(6); // Indice aggiornato
-                const featuredLabel = document.createElement('label');
-                featuredLabel.className = 'featured-toggle-label';
+                // Cella per lo stato "Featured" (Checkbox senza testo)
+                const featuredCell = row.insertCell(6);
                 const featuredCheckbox = document.createElement('input');
                 featuredCheckbox.type = 'checkbox';
-                featuredCheckbox.className = 'feature-toggle';
+                featuredCheckbox.className = 'feature-toggle larger-checkbox'; // Aggiunta classe per stile
                 featuredCheckbox.dataset.eventId = event.id;
-                featuredCheckbox.checked = event.isFeatured || false; // Usa isFeatured
+                featuredCheckbox.checked = event.isFeatured || false; // Pre-valorizza la spunta
 
                 featuredCheckbox.addEventListener('change', async (e) => {
                     const eventId = e.target.dataset.eventId;
@@ -317,30 +302,27 @@ document.addEventListener('DOMContentLoaded', async () => { // Reso async per fe
                         await toggleFeaturedStatus(eventId, newFeaturedStatus);
                         showMessage(`Stato 'featured' per '${event.name}' aggiornato a ${newFeaturedStatus ? 'true' : 'false'}!`, 'success');
                     } catch (error) {
-                        e.target.checked = !newFeaturedStatus; // Riporta la checkbox allo stato precedente in caso di errore
+                        e.target.checked = !newFeaturedStatus;
                     }
                 });
-                featuredLabel.appendChild(featuredCheckbox);
-                featuredLabel.appendChild(document.createTextNode(' Featured'));
-                featuredCell.appendChild(featuredLabel);
+                featuredCell.appendChild(featuredCheckbox);
 
-
-                // Cella per il pulsante "Delete"
-                const deleteCell = row.insertCell(7); // Indice aggiornato
+                // Cella per il pulsante "Delete" (solo icona)
+                const deleteCell = row.insertCell(7);
                 const deleteButton = document.createElement('button');
                 deleteButton.classList.add('delete-btn');
-                deleteButton.innerHTML = '<i class="fas fa-trash"></i> Elimina';
+                deleteButton.innerHTML = '<i class="fas fa-trash"></i>'; // Solo icona
+                deleteButton.title = `Elimina ${event.name}`; // Aggiungi un tooltip per accessibilità
                 deleteButton.addEventListener('click', () => handleDeleteEvent(event.id, event.name, event.location));
                 deleteCell.appendChild(deleteButton);
             });
         } catch (error) {
             console.error('Errore nel caricamento degli eventi:', error);
-            // AGGIORNATO COLSPAN A 8
             showMessage(`Errore nel caricamento degli eventi: ${error.message}`, 'error');
             eventsTableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px;">Errore nel caricamento degli eventi.</td></tr>';
         }
     };
 
-    // --- Carica gli eventi all'avvio della pagina ---
+    // Carica gli eventi all'avvio della pagina
     fetchAndDisplayEvents();
 });

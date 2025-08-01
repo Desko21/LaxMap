@@ -1127,3 +1127,50 @@ form input[type="image"] {
         height: 100%;
     }
 }
+/* Stili per la checkbox "Featured" più grande */
+.larger-checkbox {
+    transform: scale(1.5); /* Aumenta la dimensione della checkbox */
+    margin: 0; /* Rimuove eventuali margini indesiderati */
+    vertical-align: middle; /* Allinea verticalmente con il testo circostante se presente */
+}
+
+/* Potrebbe essere necessario regolare il posizionamento se la tabella è troppo stretta */
+.delete-btn {
+    background-color: #dc3545; /* Colore rosso per il bottone delete */
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+    display: flex; /* Permette di centrare l'icona */
+    justify-content: center; /* Centra orizzontalmente */
+    align-items: center; /* Centra verticalmente */
+    width: 40px; /* Rendi il bottone quadrato o della dimensione che preferisci */
+    height: 40px; /* Rendi il bottone quadrato o della dimensione che preferisci */
+}
+
+.delete-btn:hover {
+    background-color: #c82333;
+}
+
+/* Stili per le icone Font Awesome all'interno dei bottoni */
+.delete-btn .fas {
+    font-size: 1.2em; /* Dimensione dell'icona */
+}
+
+/* Puoi aggiungere o modificare stili per rendere la tabella più compatta */
+table th,
+table td {
+    padding: 10px; /* Aumenta il padding per maggiore spazio */
+    text-align: left;
+    vertical-align: middle; /* Allinea il contenuto delle celle al centro */
+}
+
+/* Centra il contenuto delle celle della checkbox e del bottone */
+table th:nth-child(7), /* Featured column */
+table td:nth-child(7), /* Featured column */
+table th:nth-child(8), /* Delete column */
+table td:nth-child(8) { /* Delete column */
+    text-align: center;
+}
