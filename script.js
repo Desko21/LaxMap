@@ -37,9 +37,15 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
     function onLocationError(e) {
         console.error("Geolocation error:", e.message);
         // Mostra un messaggio all'utente in caso di errore
-        messageDiv.textContent = `Errore di geolocalizzazione: ${e.message}. Usando la vista predefinita.`;
-        messageDiv.className = 'message error';
-        setTimeout(() => messageDiv.textContent = '', 5000); // Rimuove il messaggio dopo 5 secondi
+        // Assicurati che messageDiv sia definito prima di usarlo
+        const messageDiv = document.getElementById('message');
+        if (messageDiv) {
+            messageDiv.textContent = `Errore di geolocalizzazione: ${e.message}. Usando la vista predefinita.`;
+            messageDiv.className = 'message error';
+            setTimeout(() => messageDiv.textContent = '', 5000); // Rimuove il messaggio dopo 5 secondi
+        } else {
+            console.error("Error: messageDiv not found.");
+        }
     }
 
     // Aggiungi i listener per gli eventi di geolocalizzazione della mappa
@@ -58,12 +64,18 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
         });
     } else {
         console.log("Geolocation is not supported by this browser. Using default map view.");
-        messageDiv.textContent = 'Il tuo browser non supporta la geolocalizzazione.';
-        messageDiv.className = 'message error';
+        // Assicurati che messageDiv sia definito prima di usarlo
+        const messageDiv = document.getElementById('message');
+        if (messageDiv) {
+            messageDiv.textContent = 'Il tuo browser non supporta la geolocalizzazione.';
+            messageDiv.className = 'message error';
+        } else {
+            console.error("Error: messageDiv not found.");
+        }
     }
 
     const eventListDiv = document.getElementById('event-list');
-    const messageDiv = document.getElementById('message');
+    const messageDiv = document.getElementById('message'); // Definizione qui per uso generico
 
     const gameTypeFilter = document.getElementById('gameTypeFilter');
     const genderFilter = document.getElementById('genderFilter');
@@ -91,8 +103,8 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
 
     const costTypeDisplayNames = {
         '': '', // Questo gestisce il caso "Not Specified" con valore vuoto
-        'per-person': 'per person', // MODIFICATO: ora con il trattino
-        'per-team': 'per team'      // MODIFICATO: ora con il trattino
+        'per-person': 'per person',
+        'per-team': 'per team'
     };
 
     function populateFilterDropdown(selectElement, options) {
@@ -267,6 +279,11 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
             popupContent += `<p>${genderIcon}<strong>Gender:</strong> ${gender}</p>`;
             popupContent += costPopup;
 
+            // Aggiungi l'icona featured anche nel popup della mappa se l'evento è featured
+            if (event.isFeatured) { // Modificato da event.featured a event.isFeatured
+                popupContent += `<p><strong><span class="star-icon">⭐</span> Featured Event</strong></p>`;
+            }
+
             popupContent += `<p><a href="#event-${event.id}" class="more-info-link-popup" onclick="this.closest('.leaflet-popup').remove();"><i class="fas fa-external-link-alt icon-margin-right"></i>More Info</a></p>`;
 
             marker.bindPopup(popupContent, {
@@ -313,7 +330,8 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
         });
 
         // Anche gli eventi 'featured' devono essere tra quelli futuri
-        const allFeaturedEvents = futureEvents.filter(event => event.featured);
+        // Modificato da event.featured a event.isFeatured
+        const allFeaturedEvents = futureEvents.filter(event => event.isFeatured);
 
         const finalEventsToDisplayInList = new Map();
 
@@ -360,8 +378,8 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
 
         eventsToDisplay.sort((a, b) => {
             // Prima gli eventi featured
-            if (a.featured && !b.featured) return -1;
-            if (!a.featured && b.featured) return 1;
+            if (a.isFeatured && !b.isFeatured) return -1; // Modificato da a.featured a a.isFeatured
+            if (!a.isFeatured && b.isFeatured) return 1; // Modificato da b.featured a b.isFeatured
 
             // Poi per data di inizio crescente
             return new Date(a.startDate) - new Date(b.startDate);
@@ -372,11 +390,12 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
             eventItem.className = 'tournament-item';
             eventItem.id = `event-${event.id}`;
 
-            if (event.featured) {
+            if (event.isFeatured) { // Modificato da event.featured a event.isFeatured
                 eventItem.classList.add('featured');
             }
 
-            let featuredIconHtml = event.featured ? '<span class="star-icon event-list-icon">★</span>' : '';
+            // Modificato da event.featured a event.isFeatured
+            let featuredIconHtml = event.isFeatured ? '<span class="star-icon event-list-icon">★</span>' : '';
 
             const formattedDate = new Date(event.startDate).toLocaleDateString();
             let dateRange = formattedDate;
