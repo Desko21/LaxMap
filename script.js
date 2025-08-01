@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
     const DEFAULT_ZOOM = 5;
 
     const map = L.map('map', {
-        minZoom: 3
+        minZoom: 1
     }).setView([DEFAULT_LATITUDE, DEFAULT_LONGITUDE], DEFAULT_ZOOM);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
