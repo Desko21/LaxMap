@@ -3,8 +3,8 @@ import {
     JSONBIN_EVENTS_READ_URL,
     JSONBIN_EVENTS_WRITE_URL,
     NOMINATIM_USER_AGENT,
-    JSONBIN_LOGS_READ_URL,    // Già importato, ottimo!
-    JSONBIN_LOGS_WRITE_URL    // Già importato, ottimo!
+    JSONBIN_LOGS_READ_URL,
+    JSONBIN_LOGS_WRITE_URL
 } from './config.js'; // Assicurati che config.js sia nel percorso corretto
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const editEventStartDateInput = document.getElementById('editEventStartDate');
     const editEventEndDateInput = document.getElementById('editEventEndDate');
     const editEventDescriptionTextarea = document.getElementById('editEventDescription');
-    const editEventLinkInput = document.getElementById('editEventLink');
+    const editEventLinkInput = document = document.getElementById('editEventLink');
     const editContactEmailInput = document.getElementById('editContactEmail');
     const editEventCostInput = document.getElementById('editEventCost');
 
@@ -232,9 +232,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         messageDiv.style.display = 'none';
     };
 
-    // --- NUOVA FUNZIONE PER LOGGARE LE ATTIVITÀ ---
-    async function logActivity(type, details) {
+    // --- FUNZIONE PER LOGGARE LE ATTIVITÀ (MODIFICATA) ---
+    async function logActivity(actionType, eventDetails) { // Rinominato 'type' in 'actionType' e 'details' in 'eventDetails' per chiarezza
         try {
+            // Nota: L'indirizzo IP dell'utente non è direttamente accessibile in JavaScript lato client
+            // in modo affidabile per ragioni di sicurezza.
+            // In un'applicazione reale, l'IP verrebbe catturato e loggato dal server che riceve la richiesta.
+            // Qui usiamo un placeholder o un esempio per il formato.
+            const ipAddress = "192.168.1.100"; // Placeholder IP per l'esempio
+
             // 1. Recupera i log esistenti
             const readResponse = await fetch(JSONBIN_LOGS_READ_URL, {
                 headers: {
@@ -253,9 +259,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             // 2. Aggiungi la nuova voce di log
             const newLogEntry = {
                 timestamp: new Date().toISOString(),
-                type: type, // Es. 'ADD_EVENT', 'UPDATE_EVENT', 'DELETE_EVENT'
-                details: details // Oggetto con dettagli aggiuntivi
+                action: actionType, // Usa 'action' come nome della chiave
+                ipAddress: ipAddress,
+                event: {
+                    id: eventDetails.eventId,
+                    name: eventDetails.eventName || eventDetails.newName || eventDetails.oldName, // Adatta per nome corrente/nuovo/vecchio
+                    location: eventDetails.location || eventDetails.newLocation || eventDetails.oldLocation // Adatta per località corrente/nuova/vecchia
+                }
             };
+
+            // Aggiungi dettagli specifici per l'evento modificato o eliminato
+            if (actionType === 'EVENT_EDITED') {
+                newLogEntry.event.oldName = eventDetails.oldName;
+                newLogEntry.event.newName = eventDetails.newName;
+                newLogEntry.event.oldLocation = eventDetails.oldLocation;
+                newLogEntry.event.newLocation = eventDetails.newLocation;
+                newLogEntry.updatedAt = new Date().toISOString(); // Aggiunge un timestamp della modifica
+            } else if (actionType === 'DELETED_EVENT') {
+                newLogEntry.deletedAt = new Date().toISOString();
+            }
+
             currentLogs.push(newLogEntry);
 
             // 3. Scrivi l'array aggiornato nel bin dei log
@@ -271,14 +294,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!writeResponse.ok) {
                 console.warn(`Failed to write log entry: HTTP status ${writeResponse.status}`);
             } else {
-                console.log(`Activity logged: ${type}`, newLogEntry);
+                console.log(`Activity logged: ${actionType}`, newLogEntry);
             }
 
         } catch (error) {
             console.error('Error logging activity:', error);
         }
     }
-    // --- FINE NUOVA FUNZIONE ---
+    // --- FINE FUNZIONE LOGGING ---
 
 
     searchButton.addEventListener('click', async () => {
@@ -313,13 +336,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 editLatitudeInput.value = eventToEdit.latitude || '';
                 editLongitudeInput.value = eventToEdit.longitude || '';
 
-                setEventType(eventToEdit.type || ''); // Imposta anche i valori vuoti per reset
+                setEventType(eventToEdit.type || '');
                 setGenderType(eventToEdit.gender || '');
                 setCurrencyType(eventToEdit.currency || '');
-                setCostType(eventToEdit.costType || ''); // Assicurati che il valore di `costType` sia quello corretto (es. 'per-person' o '')
+                setCostType(eventToEdit.costType || '');
 
                 editEventStartDateInput.value = eventToEdit.startDate;
-                editEventEndDateInput.value = eventToEdit.endDate || ''; // Gestisci null per endDate
+                editEventEndDateInput.value = eventToEdit.endDate || '';
                 editEventDescriptionTextarea.value = eventToEdit.description || '';
                 editEventLinkInput.value = eventToEdit.link || '';
                 editContactEmailInput.value = eventToEdit.contactEmail || '';
@@ -457,14 +480,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             showMessage('Event updated successfully!', 'success');
 
             // --- CHIAMATA ALLA FUNZIONE DI LOGGING PER EVENTO MODIFICATO ---
-            await logActivity('EDITED_EVENT', {
+            await logActivity('EVENT_EDITED', { // Cambiato il tipo di action a "EVENT_EDITED"
                 eventId: newEventData.id,
+                eventName: newEventData.name, // Nome attuale dell'evento
+                location: newEventData.location, // Località attuale dell'evento
                 oldName: originalEventData.name,
                 newName: newEventData.name,
                 oldLocation: originalEventData.location,
-                newLocation: newEventData.location,
-                // Puoi aggiungere altri campi che ritieni importanti da loggare come modificati
-                updatedAt: new Date().toISOString() // Aggiunge un timestamp della modifica
+                newLocation: newEventData.location
+                // updatedAt: new Date().toISOString() // Già aggiunto nella funzione logActivity
             });
             // --- FINE CHIAMATA ALLA FUNZIONE DI LOGGING ---
 
@@ -484,7 +508,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
             if (!confirm(`Are you sure you want to delete event with ID: ${eventIdToDelete}?`)) {
-                return; // L'utente ha annullato
+                return;
             }
 
             hideMessage();
@@ -505,7 +529,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // Trova i dettagli dell'evento prima di eliminarlo, per il log
                 const eventToDeleteDetails = events.find(event => event.id === eventIdToDelete);
-                
+
                 const initialLength = events.length;
                 events = events.filter(event => event.id !== eventIdToDelete);
 
@@ -535,8 +559,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     await logActivity('DELETED_EVENT', {
                         eventId: eventToDeleteDetails.id,
                         eventName: eventToDeleteDetails.name,
-                        location: eventToDeleteDetails.location,
-                        deletedAt: new Date().toISOString()
+                        location: eventToDeleteDetails.location
+                        // deletedAt: new Date().toISOString() // Già aggiunto nella funzione logActivity
                     });
                 }
                 // --- FINE CHIAMATA ALLA FUNZIONE DI LOGGING ---

@@ -3,8 +3,8 @@ import {
     JSONBIN_EVENTS_READ_URL,
     JSONBIN_EVENTS_WRITE_URL,
     NOMINATIM_USER_AGENT,
-    JSONBIN_LOGS_READ_URL,   // <--- AGGIUNTO: Importa l'URL per leggere i log
-    JSONBIN_LOGS_WRITE_URL   // <--- AGGIUNTO: Importa l'URL per scrivere i log
+    JSONBIN_LOGS_READ_URL,   
+    JSONBIN_LOGS_WRITE_URL   
 } from './config.js'; // Assicurati che config.js sia nel percorso corretto
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let selectedCurrency = '';
     let selectedCostType = '';
 
-    // --- FUNZIONE PER INIZIALIZZARE LE CUSTOM DROPDOWN (copiata da edit-event.js) ---
+    // --- FUNZIONE PER INIZIALIZZARE LE CUSTOM DROPDOWN ---
     function initializeCustomDropdown(dropdownElementId, optionsArray, placeholderText = "Select", initialValue = null) {
         const dropdown = document.getElementById(dropdownElementId);
         if (!dropdown) {
@@ -85,22 +85,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        optionsList.innerHTML = ''; // Pulisci le opzioni esistenti
+        optionsList.innerHTML = ''; 
 
-        // Funzione interna per selezionare un'opzione
         const selectOption = (value) => {
-            // Aggiorna il testo del pulsante
             const selectedOption = optionsArray.find(opt => opt.value === value);
             toggleButton.textContent = selectedOption ? selectedOption.label : placeholderText;
 
-            // Rimuovi la classe 'selected' da tutte le opzioni e aggiungila a quella corrente
             optionsList.querySelectorAll('li').forEach(li => li.classList.remove('selected'));
             const selectedLi = optionsList.querySelector(`li[data-value="${value}"]`);
             if (selectedLi) {
                 selectedLi.classList.add('selected');
             }
 
-            // Imposta il valore nella variabile esterna corrispondente
             if (dropdownElementId === 'customEventType') selectedGameType = value;
             else if (dropdownElementId === 'customGenderType') selectedGender = value;
             else if (dropdownElementId === 'customCurrencyType') selectedCurrency = value;
@@ -109,20 +105,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log(`Dropdown '${dropdownElementId}' selected: ${value}`);
         };
 
-        // Popola la lista delle opzioni
         optionsArray.forEach(option => {
             const li = document.createElement('li');
             li.textContent = option.label;
             li.setAttribute('data-value', option.value);
             li.setAttribute('role', 'option');
-            li.setAttribute('tabindex', '0'); // Rendi l'elemento focusabile per l'accessibilità
+            li.setAttribute('tabindex', '0');
             optionsList.appendChild(li);
 
             li.addEventListener('click', (event) => {
                 selectOption(option.value);
-                closeDropdown(dropdown); // Chiudi solo QUESTA dropdown
-                event.stopPropagation(); // Evita che il click si propaghi
-                toggleButton.focus(); // Riporta il focus sul pulsante dopo la selezione
+                closeDropdown(dropdown);
+                event.stopPropagation();
+                toggleButton.focus();
             });
 
             li.addEventListener('keydown', (e) => {
@@ -147,26 +142,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
 
-        // Inizializza il valore se fornito
         if (initialValue !== null) {
             selectOption(initialValue);
         } else {
-            selectOption(optionsArray[0].value); // Seleziona il primo elemento (placeholder)
+            selectOption(optionsArray[0].value);
         }
 
-        // Event listener per il pulsante toggle
         toggleButton.addEventListener('click', (event) => {
-            // Chiudi tutte le altre dropdown aperte
             document.querySelectorAll('.custom-dropdown.open').forEach(openDropdown => {
                 if (openDropdown !== dropdown) {
                     openDropdown.classList.remove('open');
                 }
             });
             dropdown.classList.toggle('open');
-            event.stopPropagation(); // Impedisce la propagazione per evitare la chiusura immediata da document click
+            event.stopPropagation();
         });
 
-        // Aggiungiamo un metodo setValue al div della dropdown per impostare il valore dall'esterno
         dropdown.setValue = (value) => {
             selectOption(value);
         };
@@ -186,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Listener globale per chiudere le dropdown cliccando fuori ---
     document.addEventListener('click', (event) => {
         if (!event.target.closest('.custom-dropdown')) {
-            closeDropdown(); // Chiude tutte le dropdown se il click non è su una dropdown
+            closeDropdown();
         }
     });
 
@@ -217,9 +208,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    // --- NUOVA FUNZIONE PER LOGGARE LE ATTIVITÀ ---
-    async function logActivity(type, details) {
+    // --- NUOVA/MODIFICATA FUNZIONE PER LOGGARE LE ATTIVITÀ ---
+    async function logActivity(actionType, eventDetails) {
         try {
+            // Nota: L'indirizzo IP dell'utente non è direttamente accessibile in JavaScript lato client
+            // in modo affidabile per ragioni di sicurezza.
+            // In un'applicazione reale, l'IP verrebbe catturato e loggato dal server che riceve la richiesta.
+            // Qui usiamo un placeholder o un esempio per il formato.
+            const ipAddress = "192.168.1.100"; // Placeholder IP per l'esempio
+
             // 1. Recupera i log esistenti
             const readResponse = await fetch(JSONBIN_LOGS_READ_URL, {
                 headers: {
@@ -229,17 +226,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (!readResponse.ok) {
                 console.warn(`Failed to read logs: HTTP status ${readResponse.status}`);
-                return; // Non blocca l'operazione principale se il log fallisce
+                return;
             }
 
             const data = await readResponse.json();
             const currentLogs = Array.isArray(data.record) ? data.record : [];
 
-            // 2. Aggiungi la nuova voce di log
+            // 2. Aggiungi la nuova voce di log nel formato desiderato
             const newLogEntry = {
                 timestamp: new Date().toISOString(),
-                type: type, // Es. 'ADD_EVENT', 'UPDATE_EVENT', 'DELETE_EVENT'
-                details: details // Oggetto con dettagli aggiuntivi
+                action: actionType, // Usa 'action' come nome della chiave
+                ipAddress: ipAddress, 
+                event: {
+                    id: eventDetails.eventId,
+                    name: eventDetails.eventName,
+                    location: eventDetails.location
+                }
             };
             currentLogs.push(newLogEntry);
 
@@ -256,14 +258,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!writeResponse.ok) {
                 console.warn(`Failed to write log entry: HTTP status ${writeResponse.status}`);
             } else {
-                console.log(`Activity logged: ${type}`, newLogEntry);
+                console.log(`Activity logged: ${actionType}`, newLogEntry);
             }
 
         } catch (error) {
             console.error('Error logging activity:', error);
         }
     }
-    // --- FINE NUOVA FUNZIONE ---
+    // --- FINE NUOVA/MODIFICATA FUNZIONE ---
 
     // Geocodifica della località
     eventLocationInput.addEventListener('change', async () => {
@@ -381,13 +383,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log('Event added successfully:', result);
             showMessage('Event added successfully! ID: ' + newEvent.id, 'success');
 
-            // --- CHIAMATA ALLA FUNZIONE DI LOGGING ---
-            await logActivity('ADD_EVENT', {
+            // --- CHIAMATA ALLA FUNZIONE DI LOGGING (MODIFICATA) ---
+            await logActivity('ADDED_EVENT', {
                 eventId: newEvent.id,
                 eventName: newEvent.name,
-                location: newEvent.location,
-                type: newEvent.type,
-                gender: newEvent.gender
+                location: newEvent.location
             });
             // --- FINE CHIAMATA ALLA FUNZIONE DI LOGGING ---
 
