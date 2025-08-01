@@ -2,7 +2,9 @@ import {
     JSONBIN_MASTER_KEY,
     JSONBIN_EVENTS_READ_URL,
     JSONBIN_EVENTS_WRITE_URL,
-    NOMINATIM_USER_AGENT
+    NOMINATIM_USER_AGENT,
+    JSONBIN_LOGS_READ_URL,    // Già importato, ottimo!
+    JSONBIN_LOGS_WRITE_URL    // Già importato, ottimo!
 } from './config.js'; // Assicurati che config.js sia nel percorso corretto
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -34,6 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Dati per le dropdown
     const gameTypes = [
+        { value: '', label: 'Select Event Type' }, // Aggiunto placeholder, come in add-event.js
         { value: 'field', label: 'Field' },
         { value: 'box', label: 'Box' },
         { value: 'sixes', label: 'Sixes' },
@@ -41,6 +44,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         { value: 'other', label: 'Other' }
     ];
     const genders = [
+        { value: '', label: 'Select Gender' }, // Aggiunto placeholder, come in add-event.js
         { value: 'men', label: 'Men' },
         { value: 'women', label: 'Women' },
         { value: 'both', label: 'Both' },
@@ -48,25 +52,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         { value: 'other', label: 'Other' }
     ];
     const currencies = [
+        { value: '', label: 'Select Currency' }, // Aggiunto placeholder, come in add-event.js
         { value: 'usd', label: 'USD' },
         { value: 'eur', label: 'EUR' },
         { value: 'gbp', label: 'GBP' },
         { value: 'jpy', label: 'JPY' },
-        { value: 'cad', label: 'CAD' },
-        { value: 'aud', label: 'AUD' },
+        { value: 'cad', label: 'C$' },
+        { value: 'aud', label: 'A$' },
         { value: 'chf', label: 'CHF' },
-        { value: 'cny', label: 'CNY' },
-        { value: 'inr', label: 'INR' },
-        { value: 'brl', label: 'BRL' }
+        { value: 'cny', label: '¥' },
+        { value: 'inr', label: '₹' },
+        { value: 'brl', label: 'R$' }
     ];
     const costTypes = [
-        { value: 'not-specified', label: 'Not Specified' },
+        { value: '', label: 'Not Specified' }, // Corretto il valore da 'not-specified' a ''
         { value: 'per-person', label: 'Per Person' },
         { value: 'per-team', label: 'Per Team' }
     ];
 
     // Variabili per memorizzare i valori selezionati dalle custom dropdown
-    // Inizializzale con un valore di default o vuoto
     let selectedGameType = '';
     let selectedGender = '';
     let selectedCurrency = '';
@@ -90,20 +94,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         optionsList.innerHTML = ''; // Pulisci le opzioni esistenti
 
-        // Funzione interna per selezionare un'opzione
         const selectOption = (value) => {
-            // Aggiorna il testo del pulsante
             const selectedOption = optionsArray.find(opt => opt.value === value);
             toggleButton.textContent = selectedOption ? selectedOption.label : placeholderText;
 
-            // Rimuovi la classe 'selected' da tutte le opzioni e aggiungila a quella corrente
             optionsList.querySelectorAll('li').forEach(li => li.classList.remove('selected'));
             const selectedLi = optionsList.querySelector(`li[data-value="${value}"]`);
             if (selectedLi) {
                 selectedLi.classList.add('selected');
             }
 
-            // Imposta il valore nella variabile esterna corrispondente
             if (dropdownElementId === 'customEventType') selectedGameType = value;
             else if (dropdownElementId === 'customGenderType') selectedGender = value;
             else if (dropdownElementId === 'customCurrencyType') selectedCurrency = value;
@@ -112,20 +112,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log(`Dropdown '${dropdownElementId}' selected: ${value}`);
         };
 
-        // Popola la lista delle opzioni
         optionsArray.forEach(option => {
             const li = document.createElement('li');
             li.textContent = option.label;
             li.setAttribute('data-value', option.value);
             li.setAttribute('role', 'option');
-            li.setAttribute('tabindex', '0'); // Rendi l'elemento focusabile per l'accessibilità
+            li.setAttribute('tabindex', '0');
             optionsList.appendChild(li);
 
             li.addEventListener('click', (event) => {
                 selectOption(option.value);
-                closeDropdown(dropdown); // Chiudi solo QUESTA dropdown
-                event.stopPropagation(); // Evita che il click si propaghi e chiuda altre dropdown
-                toggleButton.focus(); // Riporta il focus sul pulsante dopo la selezione
+                closeDropdown(dropdown);
+                event.stopPropagation();
+                toggleButton.focus();
             });
 
             li.addEventListener('keydown', (e) => {
@@ -142,7 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const prevLi = li.previousElementSibling;
                     if (prevLi) prevLi.focus();
                     e.preventDefault();
-                } else if (e.key === 'Escape') { // Aggiunto per chiudere con ESC
+                } else if (e.key === 'Escape') {
                     closeDropdown(dropdown);
                     toggleButton.focus();
                     e.preventDefault();
@@ -150,32 +149,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
 
-        // Inizializza il valore se fornito
         if (initialValue) {
             selectOption(initialValue);
         } else {
-            toggleButton.textContent = placeholderText; // Imposta il placeholder se non c'è valore iniziale
+            toggleButton.textContent = placeholderText;
         }
 
-        // Event listener per il pulsante toggle
         toggleButton.addEventListener('click', (event) => {
-            // Chiudi tutte le altre dropdown aperte
             document.querySelectorAll('.custom-dropdown.open').forEach(openDropdown => {
                 if (openDropdown !== dropdown) {
                     openDropdown.classList.remove('open');
                 }
             });
             dropdown.classList.toggle('open');
-            event.stopPropagation(); // Impedisce la propagazione per evitare la chiusura immediata da document click
+            event.stopPropagation();
         });
 
-        // Restituisci la funzione per impostare il valore dall'esterno
         dropdown.setValue = (value) => {
             selectOption(value);
         };
     }
 
-    // --- Funzione per chiudere una specifica dropdown o tutte ---
     function closeDropdown(specificDropdown = null) {
         if (specificDropdown) {
             specificDropdown.classList.remove('open');
@@ -186,40 +180,107 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // --- Listener globale per chiudere le dropdown cliccando fuori ---
     document.addEventListener('click', (event) => {
         if (!event.target.closest('.custom-dropdown')) {
-            closeDropdown(); // Chiude tutte le dropdown se il click non è su una dropdown
+            closeDropdown();
         }
     });
 
-    // --- Inizializzazione delle dropdown custom all'avvio ---
-    // Passiamo null come initialValue per ora, verrà impostato dopo il fetch dell'evento
+    // --- Imposta lo zoom minimo per la mappa ---
+    async function initializeMap(latitude, longitude) {
+        if (window.map) {
+            window.map.remove();
+        }
+        const initialLat = parseFloat(latitude) || 0;
+        const initialLon = parseFloat(longitude) || 0;
+
+        window.map = L.map('map').setView([initialLat, initialLon], 5);
+        window.map.options.minZoom = 0; // Imposta lo zoom minimo per la mappa
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(window.map);
+
+        if (window.currentMarker) {
+            window.map.removeLayer(window.currentMarker);
+        }
+        window.currentMarker = L.marker([initialLat, initialLon]).addTo(window.map)
+            .bindPopup(`<b>${editEventNameInput.value}</b><br>${editEventLocationInput.value}`)
+            .openPopup();
+    }
+    // --- Fine modifica per la mappa ---
+
+
+    // Inizializzazione delle dropdown custom all'avvio
     initializeCustomDropdown('customEventType', gameTypes, 'Select Event Type');
     initializeCustomDropdown('customGenderType', genders, 'Select Gender');
     initializeCustomDropdown('customCurrencyType', currencies, 'Select Currency');
-    initializeCustomDropdown('customCostType', costTypes, 'Select Cost Type');
+    initializeCustomDropdown('customCostType', costTypes, 'Not Specified');
 
-    // Assegna le funzioni setValue alle variabili globali per comodità (opzionale, ma utile)
-    // Queste variabili ora contengono la funzione setValue per ogni dropdown
     const setEventType = document.getElementById('customEventType').setValue;
     const setGenderType = document.getElementById('customGenderType').setValue;
     const setCurrencyType = document.getElementById('customCurrencyType').setValue;
     const setCostType = document.getElementById('customCostType').setValue;
 
-    // Funzione per mostrare messaggi
     const showMessage = (msg, type) => {
         messageDiv.textContent = msg;
         messageDiv.className = `message ${type}`;
         messageDiv.style.display = 'block';
     };
 
-    // Funzione per nascondere messaggi
     const hideMessage = () => {
         messageDiv.style.display = 'none';
     };
 
-    // Funzione per recuperare i dati dell'evento
+    // --- NUOVA FUNZIONE PER LOGGARE LE ATTIVITÀ ---
+    async function logActivity(type, details) {
+        try {
+            // 1. Recupera i log esistenti
+            const readResponse = await fetch(JSONBIN_LOGS_READ_URL, {
+                headers: {
+                    'X-Master-Key': JSONBIN_MASTER_KEY
+                }
+            });
+
+            if (!readResponse.ok) {
+                console.warn(`Failed to read logs: HTTP status ${readResponse.status}`);
+                return; // Non blocca l'operazione principale se il log fallisce
+            }
+
+            const data = await readResponse.json();
+            const currentLogs = Array.isArray(data.record) ? data.record : [];
+
+            // 2. Aggiungi la nuova voce di log
+            const newLogEntry = {
+                timestamp: new Date().toISOString(),
+                type: type, // Es. 'ADD_EVENT', 'UPDATE_EVENT', 'DELETE_EVENT'
+                details: details // Oggetto con dettagli aggiuntivi
+            };
+            currentLogs.push(newLogEntry);
+
+            // 3. Scrivi l'array aggiornato nel bin dei log
+            const writeResponse = await fetch(JSONBIN_LOGS_WRITE_URL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': JSONBIN_MASTER_KEY
+                },
+                body: JSON.stringify(currentLogs)
+            });
+
+            if (!writeResponse.ok) {
+                console.warn(`Failed to write log entry: HTTP status ${writeResponse.status}`);
+            } else {
+                console.log(`Activity logged: ${type}`, newLogEntry);
+            }
+
+        } catch (error) {
+            console.error('Error logging activity:', error);
+        }
+    }
+    // --- FINE NUOVA FUNZIONE ---
+
+
     searchButton.addEventListener('click', async () => {
         const eventId = searchEventIdInput.value.trim();
         if (!eventId) {
@@ -228,7 +289,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         hideMessage();
-        eventEditFormContainer.style.display = 'none'; // Nascondi il form durante la ricerca
+        eventEditFormContainer.style.display = 'none';
 
         try {
             const response = await fetch(JSONBIN_EVENTS_READ_URL, {
@@ -246,27 +307,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             const eventToEdit = events.find(event => event.id === eventId);
 
             if (eventToEdit) {
-                // Popola i campi del form
                 eventIdInput.value = eventToEdit.id;
                 editEventNameInput.value = eventToEdit.name;
                 editEventLocationInput.value = eventToEdit.location;
                 editLatitudeInput.value = eventToEdit.latitude || '';
                 editLongitudeInput.value = eventToEdit.longitude || '';
 
-                // Imposta i valori delle custom dropdown usando le funzioni setValue
-                setEventType(eventToEdit.type);
-                setGenderType(eventToEdit.gender);
-                setCurrencyType(eventToEdit.currency);
-                setCostType(eventToEdit.costType);
+                setEventType(eventToEdit.type || ''); // Imposta anche i valori vuoti per reset
+                setGenderType(eventToEdit.gender || '');
+                setCurrencyType(eventToEdit.currency || '');
+                setCostType(eventToEdit.costType || ''); // Assicurati che il valore di `costType` sia quello corretto (es. 'per-person' o '')
 
                 editEventStartDateInput.value = eventToEdit.startDate;
-                editEventEndDateInput.value = eventToEdit.endDate;
-                editEventDescriptionTextarea.value = eventToEdit.description;
-                editEventLinkInput.value = eventToEdit.link;
-                editContactEmailInput.value = eventToEdit.contactEmail;
-                editEventCostInput.value = eventToEdit.cost;
+                editEventEndDateInput.value = eventToEdit.endDate || ''; // Gestisci null per endDate
+                editEventDescriptionTextarea.value = eventToEdit.description || '';
+                editEventLinkInput.value = eventToEdit.link || '';
+                editContactEmailInput.value = eventToEdit.contactEmail || '';
+                editEventCostInput.value = eventToEdit.cost || '';
 
-                eventEditFormContainer.style.display = 'block'; // Mostra il form
+                // Inizializza la mappa con le coordinate dell'evento
+                initializeMap(eventToEdit.latitude, eventToEdit.longitude);
+
+                eventEditFormContainer.style.display = 'block';
                 showMessage('Event loaded successfully!', 'success');
                 console.log('Event loaded:', eventToEdit);
             } else {
@@ -279,7 +341,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Funzione per geocodificare la località
     editEventLocationInput.addEventListener('change', async () => {
         const location = editEventLocationInput.value.trim();
         if (location) {
@@ -304,11 +365,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     editLongitudeInput.value = data[0].lon;
                     geolocationMessageDiv.textContent = 'Coordinates found!';
                     geolocationMessageDiv.style.color = 'green';
+                    // Aggiorna la mappa con le nuove coordinate
+                    initializeMap(data[0].lat, data[0].lon);
                 } else {
                     editLatitudeInput.value = '';
                     editLongitudeInput.value = '';
                     geolocationMessageDiv.textContent = 'Location not found. Please enter coordinates manually or refine location name.';
                     geolocationMessageDiv.style.color = 'orange';
+                    // Rimuovi il marker o resetta la mappa se le coordinate non sono trovate
+                    if (window.currentMarker) {
+                        window.map.removeLayer(window.currentMarker);
+                        window.currentMarker = null;
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching geolocation:', error);
@@ -319,6 +387,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             editLatitudeInput.value = '';
             editLongitudeInput.value = '';
             geolocationMessageDiv.textContent = '';
+            // Rimuovi il marker o resetta la mappa se la location è vuota
+            if (window.currentMarker) {
+                window.map.removeLayer(window.currentMarker);
+                window.currentMarker = null;
+            }
         }
     });
 
@@ -327,51 +400,45 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.preventDefault();
 
         const eventId = eventIdInput.value;
-        const newEventData = {
-            id: eventId,
-            name: editEventNameInput.value,
-            location: editEventLocationInput.value,
-            latitude: parseFloat(editLatitudeInput.value) || null,
-            longitude: parseFloat(editLongitudeInput.value) || null,
-            // Usa i valori dalle variabili globali aggiornate dalle custom dropdown
-            type: selectedGameType,
-            gender: selectedGender,
-            currency: selectedCurrency,
-            costType: selectedCostType,
-            startDate: editEventStartDateInput.value,
-            endDate: editEventEndDateInput.value,
-            description: editEventDescriptionTextarea.value,
-            link: editEventLinkInput.value,
-            contactEmail: editContactEmailInput.value,
-            cost: parseFloat(editEventCostInput.value) || null,
-            isFeatured: false // Mantiene lo stato originale o lo imposta come default se non gestito
-        };
+        // Recupera i dati dell'evento prima della modifica per il log
+        let originalEventData = null;
 
         try {
-            // Recupera tutti gli eventi esistenti
             const readResponse = await fetch(JSONBIN_EVENTS_READ_URL, {
-                headers: {
-                    'X-Master-Key': JSONBIN_MASTER_KEY
-                }
+                headers: { 'X-Master-Key': JSONBIN_MASTER_KEY }
             });
-            if (!readResponse.ok) {
-                throw new Error(`HTTP error! status: ${readResponse.status}`);
-            }
+            if (!readResponse.ok) throw new Error(`HTTP error! status: ${readResponse.status}`);
             const existingData = await readResponse.json();
             let events = existingData.record || [];
 
-            // Trova e aggiorna l'evento
             const eventIndex = events.findIndex(event => event.id === eventId);
-            if (eventIndex !== -1) {
-                // Mantieni lo stato isFeatured esistente se non lo modifichi
-                newEventData.isFeatured = events[eventIndex].isFeatured;
-                events[eventIndex] = newEventData;
-            } else {
+            if (eventIndex === -1) {
                 showMessage('Error: Event not found for update.', 'error');
                 return;
             }
+            originalEventData = { ...events[eventIndex] }; // Copia i dati originali
 
-            // Invia l'intero array aggiornato a JSONBin
+            const newEventData = {
+                id: eventId,
+                name: editEventNameInput.value,
+                location: editEventLocationInput.value,
+                latitude: parseFloat(editLatitudeInput.value) || null,
+                longitude: parseFloat(editLongitudeInput.value) || null,
+                type: selectedGameType,
+                gender: selectedGender,
+                currency: selectedCurrency,
+                costType: selectedCostType,
+                startDate: editEventStartDateInput.value,
+                endDate: editEventEndDateInput.value || null,
+                description: editEventDescriptionTextarea.value || null,
+                link: editEventLinkInput.value || null,
+                contactEmail: editContactEmailInput.value || null,
+                cost: parseFloat(editEventCostInput.value) || null,
+                isFeatured: events[eventIndex].isFeatured // Mantiene lo stato originale di isFeatured
+            };
+
+            events[eventIndex] = newEventData;
+
             const writeResponse = await fetch(JSONBIN_EVENTS_WRITE_URL, {
                 method: 'PUT',
                 headers: {
@@ -388,6 +455,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             const result = await writeResponse.json();
             console.log('Event updated successfully:', result);
             showMessage('Event updated successfully!', 'success');
+
+            // --- CHIAMATA ALLA FUNZIONE DI LOGGING PER EVENTO MODIFICATO ---
+            await logActivity('EDITED_EVENT', {
+                eventId: newEventData.id,
+                oldName: originalEventData.name,
+                newName: newEventData.name,
+                oldLocation: originalEventData.location,
+                newLocation: newEventData.location,
+                // Puoi aggiungere altri campi che ritieni importanti da loggare come modificati
+                updatedAt: new Date().toISOString() // Aggiunge un timestamp della modifica
+            });
+            // --- FINE CHIAMATA ALLA FUNZIONE DI LOGGING ---
+
         } catch (error) {
             console.error('Error updating event:', error);
             showMessage('Error updating event. Please try again.', 'error');
@@ -410,7 +490,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             hideMessage();
 
             try {
-                // 1. Recupera tutti gli eventi
                 const readResponse = await fetch(JSONBIN_EVENTS_READ_URL, {
                     headers: {
                         'X-Master-Key': JSONBIN_MASTER_KEY
@@ -424,7 +503,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const data = await readResponse.json();
                 let events = data.record || [];
 
-                // 2. Filtra l'evento da eliminare
+                // Trova i dettagli dell'evento prima di eliminarlo, per il log
+                const eventToDeleteDetails = events.find(event => event.id === eventIdToDelete);
+                
                 const initialLength = events.length;
                 events = events.filter(event => event.id !== eventIdToDelete);
 
@@ -433,7 +514,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
 
-                // 3. Invia l'array aggiornato (senza l'evento eliminato) a JSONBin
                 const writeResponse = await fetch(JSONBIN_EVENTS_WRITE_URL, {
                     method: 'PUT',
                     headers: {
@@ -450,15 +530,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log(`Event ${eventIdToDelete} deleted successfully.`);
                 showMessage('Event deleted successfully!', 'success');
 
-                // Resetta il form e nascondilo
+                // --- CHIAMATA ALLA FUNZIONE DI LOGGING PER EVENTO ELIMINATO ---
+                if (eventToDeleteDetails) { // Logga solo se l'evento è stato effettivamente trovato e "cancellato"
+                    await logActivity('DELETED_EVENT', {
+                        eventId: eventToDeleteDetails.id,
+                        eventName: eventToDeleteDetails.name,
+                        location: eventToDeleteDetails.location,
+                        deletedAt: new Date().toISOString()
+                    });
+                }
+                // --- FINE CHIAMATA ALLA FUNZIONE DI LOGGING ---
+
                 editEventForm.reset();
                 eventEditFormContainer.style.display = 'none';
 
-                // Resetta le dropdown custom al loro stato iniziale
                 document.getElementById('customEventType').setValue('');
                 document.getElementById('customGenderType').setValue('');
                 document.getElementById('customCurrencyType').setValue('');
                 document.getElementById('customCostType').setValue('');
+
+                // Rimuovi anche il marker dalla mappa se presente
+                if (window.currentMarker) {
+                    window.map.removeLayer(window.currentMarker);
+                    window.currentMarker = null;
+                }
 
             } catch (error) {
                 console.error('Error deleting event:', error);

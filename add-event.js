@@ -2,7 +2,9 @@ import {
     JSONBIN_MASTER_KEY,
     JSONBIN_EVENTS_READ_URL,
     JSONBIN_EVENTS_WRITE_URL,
-    NOMINATIM_USER_AGENT
+    NOMINATIM_USER_AGENT,
+    JSONBIN_LOGS_READ_URL,   // <--- AGGIUNTO: Importa l'URL per leggere i log
+    JSONBIN_LOGS_WRITE_URL   // <--- AGGIUNTO: Importa l'URL per scrivere i log
 } from './config.js'; // Assicurati che config.js sia nel percorso corretto
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -11,7 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const addEventForm = document.getElementById('addEventForm');
     const messageDiv = document.getElementById('message');
     const geolocationMessageDiv = document.getElementById('geolocationMessage');
-    const submitButton = addEventForm.querySelector('button[type="submit"]'); // <--- AGGIUNTO: Ottieni il riferimento al pulsante di submit
+    const submitButton = addEventForm.querySelector('button[type="submit"]');
 
     // Campi del form
     const eventNameInput = document.getElementById('eventName');
@@ -22,12 +24,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const eventEndDateInput = document.getElementById('eventEndDate');
     const eventDescriptionTextarea = document.getElementById('eventDescription');
     const eventLinkInput = document.getElementById('eventLink');
-    const contactEmailInput = document.getElementById('contactEmail'); // Corretto l'ID se necessario
+    const contactEmailInput = document.getElementById('contactEmail');
     const eventCostInput = document.getElementById('eventCost');
 
     // Dati per le dropdown
     const gameTypes = [
-        { value: '', label: 'Select Event Type' }, // Aggiunto placeholder
+        { value: '', label: 'Select Event Type' },
         { value: 'field', label: 'Field' },
         { value: 'box', label: 'Box' },
         { value: 'sixes', label: 'Sixes' },
@@ -35,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         { value: 'other', label: 'Other' }
     ];
     const genders = [
-        { value: '', label: 'Select Gender' }, // Aggiunto placeholder
+        { value: '', label: 'Select Gender' },
         { value: 'men', label: 'Men' },
         { value: 'women', label: 'Women' },
         { value: 'both', label: 'Both' },
@@ -43,20 +45,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         { value: 'other', label: 'Other' }
     ];
     const currencies = [
-        { value: '', label: 'Select Currency' }, // Aggiunto placeholder
+        { value: '', label: 'Select Currency' },
         { value: 'usd', label: 'USD' },
         { value: 'eur', label: 'EUR' },
         { value: 'gbp', label: 'GBP' },
         { value: 'jpy', label: 'JPY' },
-        { value: 'cad', label: 'CAD' },
-        { value: 'aud', label: 'AUD' },
+        { value: 'cad', label: 'C$' },
+        { value: 'aud', label: 'A$' },
         { value: 'chf', label: 'CHF' },
-        { value: 'cny', label: 'CNY' },
-        { value: 'inr', label: 'INR' },
-        { value: 'brl', label: 'BRL' }
+        { value: 'cny', label: '¥' },
+        { value: 'inr', label: '₹' },
+        { value: 'brl', label: 'R$' }
     ];
     const costTypes = [
-        { value: '', label: 'Not Specified' }, // Aggiunto placeholder
+        { value: '', label: 'Not Specified' },
         { value: 'per-person', label: 'Per Person' },
         { value: 'per-team', label: 'Per Team' }
     ];
@@ -146,7 +148,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         // Inizializza il valore se fornito
-        if (initialValue !== null) { // Controlla anche per stringa vuota
+        if (initialValue !== null) {
             selectOption(initialValue);
         } else {
             selectOption(optionsArray[0].value); // Seleziona il primo elemento (placeholder)
@@ -192,7 +194,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initializeCustomDropdown('customEventType', gameTypes, 'Select Event Type');
     initializeCustomDropdown('customGenderType', genders, 'Select Gender');
     initializeCustomDropdown('customCurrencyType', currencies, 'Select Currency');
-    initializeCustomDropdown('customCostType', costTypes, 'Not Specified'); // Placeholder specifico
+    initializeCustomDropdown('customCostType', costTypes, 'Not Specified');
 
     // Funzione per mostrare messaggi
     const showMessage = (msg, type) => {
@@ -214,6 +216,54 @@ document.addEventListener('DOMContentLoaded', async () => {
             return v.toString(16);
         });
     };
+
+    // --- NUOVA FUNZIONE PER LOGGARE LE ATTIVITÀ ---
+    async function logActivity(type, details) {
+        try {
+            // 1. Recupera i log esistenti
+            const readResponse = await fetch(JSONBIN_LOGS_READ_URL, {
+                headers: {
+                    'X-Master-Key': JSONBIN_MASTER_KEY
+                }
+            });
+
+            if (!readResponse.ok) {
+                console.warn(`Failed to read logs: HTTP status ${readResponse.status}`);
+                return; // Non blocca l'operazione principale se il log fallisce
+            }
+
+            const data = await readResponse.json();
+            const currentLogs = Array.isArray(data.record) ? data.record : [];
+
+            // 2. Aggiungi la nuova voce di log
+            const newLogEntry = {
+                timestamp: new Date().toISOString(),
+                type: type, // Es. 'ADD_EVENT', 'UPDATE_EVENT', 'DELETE_EVENT'
+                details: details // Oggetto con dettagli aggiuntivi
+            };
+            currentLogs.push(newLogEntry);
+
+            // 3. Scrivi l'array aggiornato nel bin dei log
+            const writeResponse = await fetch(JSONBIN_LOGS_WRITE_URL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': JSONBIN_MASTER_KEY
+                },
+                body: JSON.stringify(currentLogs)
+            });
+
+            if (!writeResponse.ok) {
+                console.warn(`Failed to write log entry: HTTP status ${writeResponse.status}`);
+            } else {
+                console.log(`Activity logged: ${type}`, newLogEntry);
+            }
+
+        } catch (error) {
+            console.error('Error logging activity:', error);
+        }
+    }
+    // --- FINE NUOVA FUNZIONE ---
 
     // Geocodifica della località
     eventLocationInput.addEventListener('change', async () => {
@@ -260,20 +310,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Gestione dell'invio del form
     addEventForm.addEventListener('submit', async (e) => {
-        e.preventDefault(); // Impedisce il comportamento predefinito di submit del form
+        e.preventDefault();
 
         hideMessage();
 
-        // <--- AGGIUNTO: Disabilita il pulsante all'inizio dell'invio
         submitButton.disabled = true;
-        submitButton.textContent = 'Adding Event...'; // Opzionale: cambia il testo del pulsante
+        submitButton.textContent = 'Adding Event...';
 
-        // Validazione minima
         if (!eventNameInput.value || !eventLocationInput.value || !eventStartDateInput.value ||
             !selectedGameType || !selectedGender) {
             showMessage('Please fill in all required fields (Event Name, Location, Start Date, Game Type, Gender).', 'error');
-            submitButton.disabled = false; // <--- AGGIUNTO: Riabilita il pulsante in caso di validazione fallita
-            submitButton.textContent = 'Add Event'; // Riporta il testo originale
+            submitButton.disabled = false;
+            submitButton.textContent = 'Add Event';
             return;
         }
 
@@ -283,18 +331,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             location: eventLocationInput.value,
             latitude: parseFloat(latitudeInput.value) || null,
             longitude: parseFloat(longitudeInput.value) || null,
-            type: selectedGameType, // Usa il valore della custom dropdown
-            gender: selectedGender, // Usa il valore della custom dropdown
+            type: selectedGameType,
+            gender: selectedGender,
             startDate: eventStartDateInput.value,
             endDate: eventEndDateInput.value || null,
             description: eventDescriptionTextarea.value || null,
             link: eventLinkInput.value || null,
             contactEmail: contactEmailInput.value || null,
             cost: parseFloat(eventCostInput.value) || null,
-            currency: selectedCurrency || null, // Usa il valore della custom dropdown
-            costType: selectedCostType || null, // Usa il valore della custom dropdown
-            isFeatured: false, // Default a false per i nuovi eventi
-            createdAt: new Date().toISOString() // Timestamp di creazione
+            currency: selectedCurrency || null,
+            costType: selectedCostType || null,
+            isFeatured: false,
+            createdAt: new Date().toISOString()
         };
 
         try {
@@ -333,6 +381,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log('Event added successfully:', result);
             showMessage('Event added successfully! ID: ' + newEvent.id, 'success');
 
+            // --- CHIAMATA ALLA FUNZIONE DI LOGGING ---
+            await logActivity('ADD_EVENT', {
+                eventId: newEvent.id,
+                eventName: newEvent.name,
+                location: newEvent.location,
+                type: newEvent.type,
+                gender: newEvent.gender
+            });
+            // --- FINE CHIAMATA ALLA FUNZIONE DI LOGGING ---
+
             // Resetta il form
             addEventForm.reset();
             // Resetta i valori delle custom dropdown ai placeholder iniziali
@@ -345,7 +403,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('Error adding event:', error);
             showMessage('Error adding event. Please try again.', 'error');
         } finally {
-            // <--- AGGIUNTO: Riabilita il pulsante e ripristina il testo in ogni caso (successo o errore)
             submitButton.disabled = false;
             submitButton.textContent = 'Add Event';
         }
