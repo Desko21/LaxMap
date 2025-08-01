@@ -1,25 +1,22 @@
 import {
     JSONBIN_MASTER_KEY,
-    JSONBIN_EVENTS_READ_URL,
     JSONBIN_EVENTS_WRITE_URL,
     NOMINATIM_USER_AGENT,
-    JSONBIN_LOGS_READ_URL,   
-    JSONBIN_LOGS_WRITE_URL   
-} from './config.js'; // Assicurati che config.js sia nel percorso corretto
+    JSONBIN_LOGS_READ_URL,
+    JSONBIN_LOGS_WRITE_URL
+} from './config.js';
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
     console.log('add-event.js loaded.');
 
     const addEventForm = document.getElementById('addEventForm');
-    const messageDiv = document.getElementById('message');
-    const geolocationMessageDiv = document.getElementById('geolocationMessage');
-    const submitButton = addEventForm.querySelector('button[type="submit"]');
-
-    // Campi del form
     const eventNameInput = document.getElementById('eventName');
     const eventLocationInput = document.getElementById('eventLocation');
     const latitudeInput = document.getElementById('latitude');
     const longitudeInput = document.getElementById('longitude');
+    const geolocationMessageDiv = document.getElementById('geolocationMessage');
+    const messageDiv = document.getElementById('message');
+
     const eventStartDateInput = document.getElementById('eventStartDate');
     const eventEndDateInput = document.getElementById('eventEndDate');
     const eventDescriptionTextarea = document.getElementById('eventDescription');
@@ -85,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        optionsList.innerHTML = ''; 
+        optionsList.innerHTML = '';
 
         const selectOption = (value) => {
             const selectedOption = optionsArray.find(opt => opt.value === value);
@@ -142,10 +139,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
 
-        if (initialValue !== null) {
+        if (initialValue) {
             selectOption(initialValue);
         } else {
-            selectOption(optionsArray[0].value);
+            toggleButton.textContent = placeholderText;
         }
 
         toggleButton.addEventListener('click', (event) => {
@@ -163,7 +160,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
-    // --- Funzione per chiudere una specifica dropdown o tutte ---
     function closeDropdown(specificDropdown = null) {
         if (specificDropdown) {
             specificDropdown.classList.remove('open');
@@ -174,100 +170,97 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // --- Listener globale per chiudere le dropdown cliccando fuori ---
     document.addEventListener('click', (event) => {
         if (!event.target.closest('.custom-dropdown')) {
             closeDropdown();
         }
     });
 
-    // --- Inizializzazione delle dropdown custom all'avvio ---
+    // Inizializzazione delle dropdown custom all'avvio
     initializeCustomDropdown('customEventType', gameTypes, 'Select Event Type');
     initializeCustomDropdown('customGenderType', genders, 'Select Gender');
     initializeCustomDropdown('customCurrencyType', currencies, 'Select Currency');
     initializeCustomDropdown('customCostType', costTypes, 'Not Specified');
 
-    // Funzione per mostrare messaggi
     const showMessage = (msg, type) => {
         messageDiv.textContent = msg;
         messageDiv.className = `message ${type}`;
         messageDiv.style.display = 'block';
     };
 
-    // Funzione per nascondere messaggi
     const hideMessage = () => {
         messageDiv.style.display = 'none';
     };
 
-    // Funzione per generare un ID unico
-    const generateUniqueId = () => {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            var r = Math.random() * 16 | 0,
-                v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    };
+    // --- FUNZIONE CENTRALIZZATA PER LOGGARE LE ATTIVITÀ (CON RECUPERO IP E STRUTTURA JSON CORRETTA) ---
+    async function logActivity(action, mainEventData, changeDetails = {}) {
+        const timestamp = new Date().toISOString();
+        let userIp = 'N/A';
 
-    // --- NUOVA/MODIFICATA FUNZIONE PER LOGGARE LE ATTIVITÀ ---
-    async function logActivity(actionType, eventDetails) {
         try {
-            // Nota: L'indirizzo IP dell'utente non è direttamente accessibile in JavaScript lato client
-            // in modo affidabile per ragioni di sicurezza.
-            // In un'applicazione reale, l'IP verrebbe catturato e loggato dal server che riceve la richiesta.
-            // Qui usiamo un placeholder o un esempio per il formato.
-            const ipAddress = "192.168.1.100"; // Placeholder IP per l'esempio
+            const ipResponse = await fetch('https://api.ipify.org?format=json');
+            if (ipResponse.ok) {
+                const ipData = await ipResponse.json();
+                userIp = ipData.ip || 'N/A';
+            } else {
+                console.warn("Could not retrieve IP:", await ipResponse.text());
+            }
+        } catch (ipError) {
+            console.error("Error retrieving IP:", ipError);
+        }
 
-            // 1. Recupera i log esistenti
-            const readResponse = await fetch(JSONBIN_LOGS_READ_URL, {
-                headers: {
-                    'X-Master-Key': JSONBIN_MASTER_KEY
-                }
+        const logEntry = {
+            timestamp: timestamp,
+            action: action,
+            ipAddress: userIp,
+            event: { // Questo oggetto contiene solo i dettagli dell'evento attuale
+                id: mainEventData.id,
+                name: mainEventData.name,
+                location: mainEventData.location
+            }
+        };
+
+        // Aggiungi dettagli specifici di modifica o eliminazione al livello superiore del logEntry
+        if (action === 'EVENT_CREATED') {
+            logEntry.createdAt = new Date().toISOString();
+        }
+        // Puoi aggiungere qui logica per altri tipi di azioni se necessario in futuro
+
+        try {
+            const readLogResponse = await fetch(JSONBIN_LOGS_READ_URL, {
+                headers: { 'X-Master-Key': JSONBIN_MASTER_KEY }
             });
-
-            if (!readResponse.ok) {
-                console.warn(`Failed to read logs: HTTP status ${readResponse.status}`);
-                return;
+            let existingLogs = [];
+            if (readLogResponse.ok) {
+                const logData = await readLogResponse.json();
+                existingLogs = Array.isArray(logData.record) ? logData.record : [];
+            } else {
+                console.warn(`Could not read existing logs (status: ${readLogResponse.status}), starting fresh or bin might be empty.`);
             }
 
-            const data = await readResponse.json();
-            const currentLogs = Array.isArray(data.record) ? data.record : [];
+            existingLogs.push(logEntry);
 
-            // 2. Aggiungi la nuova voce di log nel formato desiderato
-            const newLogEntry = {
-                timestamp: new Date().toISOString(),
-                action: actionType, // Usa 'action' come nome della chiave
-                ipAddress: ipAddress, 
-                event: {
-                    id: eventDetails.eventId,
-                    name: eventDetails.eventName,
-                    location: eventDetails.location
-                }
-            };
-            currentLogs.push(newLogEntry);
-
-            // 3. Scrivi l'array aggiornato nel bin dei log
-            const writeResponse = await fetch(JSONBIN_LOGS_WRITE_URL, {
+            const writeLogResponse = await fetch(JSONBIN_LOGS_WRITE_URL, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Master-Key': JSONBIN_MASTER_KEY
+                    'X-Master-Key': JSONBIN_MASTER_KEY,
+                    'X-Bin-Meta': 'false'
                 },
-                body: JSON.stringify(currentLogs)
+                body: JSON.stringify(existingLogs)
             });
 
-            if (!writeResponse.ok) {
-                console.warn(`Failed to write log entry: HTTP status ${writeResponse.status}`);
+            if (!writeLogResponse.ok) {
+                console.error("Failed to save activity log:", await writeLogResponse.text());
             } else {
-                console.log(`Activity logged: ${actionType}`, newLogEntry);
+                console.log(`Activity logged: ${action}`, logEntry);
             }
-
         } catch (error) {
             console.error('Error logging activity:', error);
         }
     }
-    // --- FINE NUOVA/MODIFICATA FUNZIONE ---
+    // --- FINE FUNZIONE LOGGING CENTRALIZZATA ---
 
-    // Geocodifica della località
     eventLocationInput.addEventListener('change', async () => {
         const location = eventLocationInput.value.trim();
         if (location) {
@@ -310,69 +303,54 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Gestione dell'invio del form
     addEventForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        hideMessage();
-
-        submitButton.disabled = true;
-        submitButton.textContent = 'Adding Event...';
-
-        if (!eventNameInput.value || !eventLocationInput.value || !eventStartDateInput.value ||
-            !selectedGameType || !selectedGender) {
-            showMessage('Please fill in all required fields (Event Name, Location, Start Date, Game Type, Gender).', 'error');
-            submitButton.disabled = false;
-            submitButton.textContent = 'Add Event';
-            return;
-        }
+        const eventId = `event-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
         const newEvent = {
-            id: generateUniqueId(),
+            id: eventId,
             name: eventNameInput.value,
             location: eventLocationInput.value,
             latitude: parseFloat(latitudeInput.value) || null,
             longitude: parseFloat(longitudeInput.value) || null,
             type: selectedGameType,
             gender: selectedGender,
+            currency: selectedCurrency,
+            costType: selectedCostType,
             startDate: eventStartDateInput.value,
             endDate: eventEndDateInput.value || null,
             description: eventDescriptionTextarea.value || null,
             link: eventLinkInput.value || null,
             contactEmail: contactEmailInput.value || null,
             cost: parseFloat(eventCostInput.value) || null,
-            currency: selectedCurrency || null,
-            costType: selectedCostType || null,
-            isFeatured: false,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            isFeatured: false // Default to false for new events
         };
 
         try {
-            // 1. Recupera tutti gli eventi esistenti
-            const readResponse = await fetch(JSONBIN_EVENTS_READ_URL, {
-                headers: {
-                    'X-Master-Key': JSONBIN_MASTER_KEY
-                }
+            // Read existing events
+            const readResponse = await fetch(JSONBIN_EVENTS_WRITE_URL + '/latest', {
+                headers: { 'X-Master-Key': JSONBIN_MASTER_KEY }
             });
 
-            if (!readResponse.ok) {
-                throw new Error(`HTTP error! status: ${readResponse.status}`);
+            let existingEvents = [];
+            if (readResponse.ok) {
+                const data = await readResponse.json();
+                existingEvents = data.record || [];
+            } else {
+                console.warn("Could not read existing events or bin does not exist, starting fresh.");
             }
 
-            const data = await readResponse.json();
-            const events = data.record || [];
+            existingEvents.push(newEvent);
 
-            // 2. Aggiungi il nuovo evento all'array
-            events.push(newEvent);
-
-            // 3. Invia l'intero array aggiornato a JSONBin
             const writeResponse = await fetch(JSONBIN_EVENTS_WRITE_URL, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Master-Key': JSONBIN_MASTER_KEY
                 },
-                body: JSON.stringify(events)
+                body: JSON.stringify(existingEvents)
             });
 
             if (!writeResponse.ok) {
@@ -381,30 +359,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const result = await writeResponse.json();
             console.log('Event added successfully:', result);
-            showMessage('Event added successfully! ID: ' + newEvent.id, 'success');
+            showMessage('Event added successfully!', 'success');
+            addEventForm.reset(); // Clear the form
 
-            // --- CHIAMATA ALLA FUNZIONE DI LOGGING (MODIFICATA) ---
-            await logActivity('ADDED_EVENT', {
-                eventId: newEvent.id,
-                eventName: newEvent.name,
-                location: newEvent.location
-            });
-            // --- FINE CHIAMATA ALLA FUNZIONE DI LOGGING ---
-
-            // Resetta il form
-            addEventForm.reset();
-            // Resetta i valori delle custom dropdown ai placeholder iniziali
+            // Reset custom dropdowns
             document.getElementById('customEventType').setValue('');
             document.getElementById('customGenderType').setValue('');
             document.getElementById('customCurrencyType').setValue('');
             document.getElementById('customCostType').setValue('');
 
+            // --- CHIAMATA ALLA FUNZIONE DI LOGGING PER EVENTO CREATO ---
+            await logActivity('EVENT_CREATED', {
+                id: newEvent.id,
+                name: newEvent.name,
+                location: newEvent.location
+            });
+            // --- FINE CHIAMATA ALLA FUNZIONE DI LOGGING ---
+
         } catch (error) {
             console.error('Error adding event:', error);
             showMessage('Error adding event. Please try again.', 'error');
-        } finally {
-            submitButton.disabled = false;
-            submitButton.textContent = 'Add Event';
         }
     });
 });
