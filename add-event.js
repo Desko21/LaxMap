@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const addEventForm = document.getElementById('addEventForm');
     const messageDiv = document.getElementById('message');
     const geolocationMessageDiv = document.getElementById('geolocationMessage');
+    const submitButton = addEventForm.querySelector('button[type="submit"]'); // <--- AGGIUNTO: Ottieni il riferimento al pulsante di submit
 
     // Campi del form
     const eventNameInput = document.getElementById('eventName');
@@ -21,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const eventEndDateInput = document.getElementById('eventEndDate');
     const eventDescriptionTextarea = document.getElementById('eventDescription');
     const eventLinkInput = document.getElementById('eventLink');
-    const contactEmailInput = document.getElementById('contactEmail');
+    const contactEmailInput = document.getElementById('contactEmail'); // Corretto l'ID se necessario
     const eventCostInput = document.getElementById('eventCost');
 
     // Dati per le dropdown
@@ -263,10 +264,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         hideMessage();
 
+        // <--- AGGIUNTO: Disabilita il pulsante all'inizio dell'invio
+        submitButton.disabled = true;
+        submitButton.textContent = 'Adding Event...'; // Opzionale: cambia il testo del pulsante
+
         // Validazione minima
         if (!eventNameInput.value || !eventLocationInput.value || !eventStartDateInput.value ||
             !selectedGameType || !selectedGender) {
             showMessage('Please fill in all required fields (Event Name, Location, Start Date, Game Type, Gender).', 'error');
+            submitButton.disabled = false; // <--- AGGIUNTO: Riabilita il pulsante in caso di validazione fallita
+            submitButton.textContent = 'Add Event'; // Riporta il testo originale
             return;
         }
 
@@ -337,6 +344,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (error) {
             console.error('Error adding event:', error);
             showMessage('Error adding event. Please try again.', 'error');
+        } finally {
+            // <--- AGGIUNTO: Riabilita il pulsante e ripristina il testo in ogni caso (successo o errore)
+            submitButton.disabled = false;
+            submitButton.textContent = 'Add Event';
         }
     });
 });
