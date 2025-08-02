@@ -24,6 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const contactEmailInput = document.getElementById('contactEmail');
     const eventCostInput = document.getElementById('eventCost');
 
+    // **NUOVA RIGA: Riferimento al bottone di invio**
+    const addEventButton = document.getElementById('add-event-button'); // ASSICURATI CHE IL TUO HTML ABBIA <button type="submit" id="add-event-button">
+
     // Dati per le dropdown
     const gameTypes = [
         { value: '', label: 'Select Event Type' },
@@ -303,8 +306,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // **BLOCCO MODIFICATO: Gestione dell'invio del form e del pulsante**
     addEventForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        // Disabilita il pulsante e mostra lo stato di caricamento
+        if (addEventButton) { // Controlla che il pulsante esista
+            addEventButton.disabled = true;
+            addEventButton.textContent = 'Adding new event...';
+            // Opzionale: aggiungi una classe per styling di caricamento (es. con un'icona spinner)
+            // addEventButton.classList.add('loading');
+        }
 
         const eventId = `event-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
@@ -379,6 +391,13 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error adding event:', error);
             showMessage('Error adding event. Please try again.', 'error');
+        } finally {
+            // Riabilita il pulsante e ripristina il testo, indipendentemente dal successo o dall'errore
+            if (addEventButton) {
+                addEventButton.disabled = false;
+                addEventButton.textContent = 'Add Event'; // Ripristina il testo originale
+                // addEventButton.classList.remove('loading'); // Rimuovi la classe di caricamento se l'hai aggiunta
+            }
         }
     });
 });
