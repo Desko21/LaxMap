@@ -349,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let existingEvents = [];
             if (readResponse.ok) {
                 const data = await readResponse.json();
-                existingEvents = data.record || [];
+                existingEvents = Array.isArray(data.record) ? data.record : [];
             } else {
                 console.warn("Could not read existing events or bin does not exist, starting fresh.");
             }
