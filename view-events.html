@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaxMap 🥍 | View Events</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main>
+        <div class="container">
+             <h2>Upcoming Lacrosse Events</h2>
+            <div id="map"></div>
+            
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label for="gameTypeFilter">Game Type:</label>
+                    <select id="gameTypeFilter">
+                        <option value="all">All</option>
+                        <option value="field">Field</option>
+                        <option value="box">Box</option>
+                        <option value="sixes">Sixes</option>
+                        <option value="clinic">Clinic</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="genderFilter">Gender:</label>
+                    <select id="genderFilter">
+                        <option value="all">All</option>
+                        <option value="men">Men</option>
+                        <option value="women">Women</option>
+                        <option value="both">Both</option>
+                    </select>
+                </div>
+            </div>
+            <h3>Event List</h3>
+            <div id="event-list">
+                <p>Loading events...</p>
+            </div>
+            
+            <div id="message"></div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+    <script src="include.js"></script>
+	<script type="module" src="script.js"></script>
+    <script src="load-header.js"></script>
+</body>
+</html>
