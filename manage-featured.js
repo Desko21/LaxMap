@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const PAYPAL_ITEM_NAME = 'Promozione Evento Featured LaxMap';
     const PAYPAL_AMOUNT = '1.00'; // Costo per essere Featured (1€)
     const PAYPAL_CURRENCY_CODE = 'EUR'; // Valuta (es. USD, EUR, GBP)
-    const PAYPAL_RETURN_URL = 'https://tuodominio.com/grazie-paypal.html'; // URL dopo pagamento riuscito
-    const PAYPAL_CANCEL_URL = 'https://tuodominio.com/annulla-pagamento.html'; // URL dopo pagamento annullata
+    const PAYPAL_RETURN_URL = 'https://laxmap.app/thank-you.html'; // Thank you
+    const PAYPAL_CANCEL_URL = 'https://laxmap.app/donate.html'; // Donate
     // NOTA: notify_url richiede un backend per IPN, non incluso in questo setup frontend
     // const PAYPAL_NOTIFY_URL = 'https://tuodominio.com/ipn-listener.php';
 
