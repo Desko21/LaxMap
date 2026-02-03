@@ -12,21 +12,19 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('manage-featured.js loaded.');
 
     // CONFIGURAZIONE PAYPAL
-    const PAYPAL_BUSINESS_EMAIL_OR_ID = 'jakkolo@gmail.com'; // <--- INSERISCI QUI LA TUA EMAIL PAYPAL O ID COMMERCIANTE
+    const PAYPAL_BUSINESS_EMAIL_OR_ID = 'jakkolo@gmail.com'; 
     const PAYPAL_ITEM_NAME = 'Promozione Evento Featured LaxMap';
-    const PAYPAL_AMOUNT = '1.00'; // Costo per essere Featured (1€)
-    const PAYPAL_CURRENCY_CODE = 'EUR'; // Valuta (es. USD, EUR, GBP)
-    const PAYPAL_RETURN_URL = 'https://laxmap.app/thank-you.html'; // Thank you
-    const PAYPAL_CANCEL_URL = 'https://laxmap.app/donate.html'; // Donate
-    // NOTA: notify_url richiede un backend per IPN, non incluso in questo setup frontend
-    // const PAYPAL_NOTIFY_URL = 'https://tuodominio.com/ipn-listener.php';
+    const PAYPAL_AMOUNT = '1.00'; 
+    const PAYPAL_CURRENCY_CODE = 'EUR'; 
+    const PAYPAL_RETURN_URL = 'https://laxmap.app/thank-you.html'; 
+    const PAYPAL_CANCEL_URL = 'https://laxmap.app/donate.html'; 
 
     const eventListDiv = document.getElementById('event-list-for-featured-management');
     const messageDiv = document.getElementById('message');
 
-    let allEvents = []; // To store all events after fetching
+    let allEvents = []; 
 
-    // --- NEW: Log Activity Function ---
+    // --- Log Activity Function ---
     async function logActivity(action, eventDetails) {
         const timestamp = new Date().toISOString();
         let userIp = 'N/A';
@@ -36,8 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ipResponse.ok) {
                 const ipData = await ipResponse.json();
                 userIp = ipData.ip || 'N/A';
-            } else {
-                console.warn("Could not retrieve IP:", await ipResponse.text());
             }
         } catch (ipError) {
             console.error("Error retrieving IP:", ipError);
@@ -48,30 +44,25 @@ document.addEventListener('DOMContentLoaded', () => {
             action: action,
             ipAddress: userIp,
             event: {
-                id: eventDetails.id, // Using eventDetails.id (which is createdAt in this context)
+                id: eventDetails.id,
                 name: eventDetails.name,
                 location: eventDetails.location,
             }
         };
 
         try {
-            // Note: JSONBIN_LOGS_WRITE_URL + '/latest' is typically for reading the latest version.
-            // For appending, you usually read the bin and then PUT the new array to the base URL.
-            // Assuming JSONBIN_LOGS_WRITE_URL is the correct base URL for the logs bin.
-            const readLogResponse = await fetch(JSONBIN_LOGS_WRITE_URL + '/latest', { // Added '/latest' for reading if it's a versioned bin
+            const readLogResponse = await fetch(JSONBIN_LOGS_WRITE_URL + '/latest', {
                 headers: { 'X-Master-Key': JSONBIN_MASTER_KEY }
             });
             let existingLogs = [];
             if (readLogResponse.ok) {
                 const logData = await readLogResponse.json();
-                existingLogs = Array.isArray(logData.record) ? logData.record : []; // Ensure it's an array
-            } else {
-                console.warn("Could not read existing logs or bin does not exist, starting fresh.");
+                existingLogs = Array.isArray(logData.record) ? logData.record : [];
             }
 
             existingLogs.push(logEntry);
 
-            const writeLogResponse = await fetch(JSONBIN_LOGS_WRITE_URL, {
+            await fetch(JSONBIN_LOGS_WRITE_URL, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -80,16 +71,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify(existingLogs)
             });
-
-            if (!writeLogResponse.ok) {
-                console.error("Failed to save activity log:", await writeLogResponse.text());
-            }
         } catch (error) {
             console.error('Error logging activity:', error);
         }
     }
-    // --- END NEW: Log Activity Function ---
-
 
     async function loadEventsForFeaturedManagement() {
         try {
@@ -100,33 +85,49 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error("Error reading bin:", response.status, errorText);
-                eventListDiv.innerHTML = '<p class="error">Error loading events. Please check console.</p>';
+                eventListDiv.innerHTML = '<p class="error">Error loading events.</p>';
                 return;
             }
 
             const data = await response.json();
-            allEvents = data.record || []; // Store events
-            console.log('All events loaded for featured management:', allEvents);
+            const fetchedEvents = data.record || [];
 
+            // --- FILTRO DINAMICO DATA CORRENTE ---
+            // Prende la data di questo istante
+            const now = new Date();
+            // Opzionale: azzeriamo l'ora per includere gli eventi che scadono oggi
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            allEvents = fetchedEvents.filter(event => {
+                // Se l'evento non ha startDate, lo escludiamo per sicurezza
+                if (!event.startDate) return false;
+
+                // Usiamo endDate se disponibile, altrimenti startDate
+                const eventDateToCheck = new Date(event.endDate || event.startDate);
+                
+                // Ritorna vero solo se la data dell'evento è oggi o nel futuro
+                return eventDateToCheck >= todayStart;
+            });
+            // --- FINE FILTRO ---
+
+            console.log('Filtered events (upcoming only):', allEvents);
             displayEventsForFeaturedManagement(allEvents);
 
         } catch (error) {
-            console.error('An unexpected error occurred while loading events:', error);
+            console.error('An unexpected error occurred:', error);
             eventListDiv.innerHTML = '<p class="error">An unexpected error occurred. Please try again.</p>';
         }
     }
 
     function displayEventsForFeaturedManagement(events) {
-        eventListDiv.innerHTML = ''; // Clear previous list
+        eventListDiv.innerHTML = ''; 
 
         if (events.length === 0) {
-            eventListDiv.innerHTML = '<p>No events available to manage featured status.</p>';
+            eventListDiv.innerHTML = '<p>No upcoming events available for promotion.</p>';
             return;
         }
 
-        // Sort events by creation date (newest first)
+        // Sort: i più recenti creati in alto
         events.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         events.forEach(event => {
@@ -134,24 +135,17 @@ document.addEventListener('DOMContentLoaded', () => {
             eventItem.className = 'tournament-item';
 
             let actionButtonHtml = '';
-            let sixesIconHtml = '';
+            let sixesIconHtml = (event.format && event.format.toLowerCase() === 'sixes') 
+                ? '<span class="sixes-icon">6</span>' 
+                : '';
 
-            // Aggiungi l'icona "6" se il formato è "sixes"
-            if (event.format && event.format.toLowerCase() === 'sixes') {
-                sixesIconHtml = '<span class="sixes-icon">6</span>';
-            }
-
-            // Mostra il pulsante "Make Featured" SOLO se l'evento NON è già featured
-            // Correzione qui: da event.featured a event.isFeatured
             if (!event.isFeatured) {
-                // Aggiungi la stellina al pulsante "Make Featured"
                 actionButtonHtml = `
                     <button class="feature-button" data-id="${event.createdAt}" data-event-name="${event.name}" data-event-location="${event.location}">
                         Make Featured (1€) <span class="star-icon">★</span>
                     </button>
                 `;
             } else {
-                // Se l'evento è già featured, mostra un messaggio invece del pulsante
                 actionButtonHtml = `<p style="color: green; font-weight: bold; margin-top: 10px;">This event is already Featured.</p>`;
             }
 
@@ -162,25 +156,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p>${event.description ? event.description.substring(0, 100) + '...' : ''}</p>
                 <div class="event-actions">
                     ${actionButtonHtml}
-                    ${sixesIconHtml} </div>
+                    ${sixesIconHtml}
+                </div>
             `;
             eventListDiv.appendChild(eventItem);
         });
 
-        // Add event listener for the "Make Featured" buttons
         document.querySelectorAll('.feature-button').forEach(button => {
             button.addEventListener('click', (e) => {
-                const eventId = e.target.dataset.id; // This is createdAt
-                const eventName = e.target.dataset.eventName;
-                const eventLocation = e.target.dataset.eventLocation;
-
-                initiatePayPalPayment(eventId, eventName); // PayPal call
+                const btn = e.currentTarget;
+                const eventId = btn.dataset.id;
+                const eventName = btn.dataset.eventName;
+                initiatePayPalPayment(eventId, eventName);
             });
         });
     }
 
     function initiatePayPalPayment(eventId, eventName) {
-        // --- NUOVA RIGA: Logga l'inizio del pagamento PayPal ---
         const selectedEvent = allEvents.find(event => event.createdAt === eventId);
         if (selectedEvent) {
             logActivity('INITIATE_PAYPAL_PAYMENT', {
@@ -188,15 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: selectedEvent.name,
                 location: selectedEvent.location
             });
-        } else {
-            console.warn('Could not find event in allEvents for logging PayPal initiation.');
-            logActivity('INITIATE_PAYPAL_PAYMENT_FALLBACK', {
-                id: eventId,
-                name: eventName,
-                location: 'Unknown (from PayPal initiation)'
-            });
         }
-        // --- Fine NUOVA RIGA ---
 
         const confirmation = confirm(`You are about to pay ${PAYPAL_AMOUNT} ${PAYPAL_CURRENCY_CODE} to make "${eventName}" a featured event. Continue to PayPal?`);
         if (!confirmation) {
@@ -229,14 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
             form.appendChild(input);
         }
 
-        const pixel = document.createElement('img');
-        pixel.alt = '';
-        pixel.border = '0';
-        pixel.src = 'https://www.paypalobjects.com/en_US/i/scr/pixel.gif';
-        pixel.width = '1';
-        pixel.height = '1';
-        form.appendChild(pixel);
-
         document.body.appendChild(form);
         form.submit();
         document.body.removeChild(form);
@@ -251,6 +227,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 5000);
     }
 
-    // Initial load of events when the page loads
     loadEventsForFeaturedManagement();
 });
