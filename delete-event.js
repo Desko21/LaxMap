@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return true;
         } catch (error) {
             console.error('Errore durante l\'aggiornamento dello stato featured:', error);
-            showMessage(`Errore nell'aggiornamento dello stato featured: ${error.message}`, 'error');
+            showMessage(`An error occurred while updating the featured status: ${error.message}`, 'error');
             throw error;
         }
     }
@@ -325,4 +325,5 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Carica gli eventi all'avvio della pagina
     fetchAndDisplayEvents();
+
 });
