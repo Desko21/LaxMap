@@ -372,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
 
         if (eventsToDisplay.length === 0) {
             // Messaggio aggiornato per riflettere i filtri temporali
-            eventListDiv.innerHTML = '<p>Nessun evento futuro trovato con i filtri selezionati. Prova a cambiare i filtri o controlla se ci sono eventi featured.</p>';
+            eventListDiv.innerHTML = '<p>No upcoming events found with the selected filters. Try changing the filters or check for featured events.</p>';
             return;
         }
 
@@ -478,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
             const clickableTitle = eventItem.querySelector('.event-title-clickable');
             if (clickableTitle) {
                 clickableTitle.style.cursor = 'pointer';
-                clickableTitle.title = 'Clicca per vedere sulla mappa'; // Tradotto
+                clickableTitle.title = 'Click to see on map'; // Tradotto
                 clickableTitle.addEventListener('click', () => {
                     zoomToEvent(event.latitude, event.longitude);
                 });
@@ -491,4 +491,5 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
     genderFilter.addEventListener('change', filterAndDisplayEvents);
 
     loadEvents();
+
 });
