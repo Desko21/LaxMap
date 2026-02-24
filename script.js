@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
         // Assicurati che messageDiv sia definito prima di usarlo
         const messageDiv = document.getElementById('message');
         if (messageDiv) {
-            messageDiv.textContent = `Errore di geolocalizzazione: ${e.message}. Usando la vista predefinita.`;
+            messageDiv.textContent = `Geolocation error: ${e.message}. Using default view.`;
             messageDiv.className = 'message error';
             setTimeout(() => messageDiv.textContent = '', 5000); // Rimuove il messaggio dopo 5 secondi
         } else {
@@ -493,3 +493,4 @@ document.addEventListener('DOMContentLoaded', () => { // NON più async
     loadEvents();
 
 });
+
